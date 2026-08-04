@@ -1,13 +1,10 @@
 import os
 import json
-import httpx
 from fastapi import HTTPException
-from dotenv import load_dotenv
 
 from app.schemas.request_schemas import ExplainRequest
 from app.schemas.response_schemas import ExplanationResponse
-
-load_dotenv()
+from app.dependencies.ollama_client import get_ollama_completion
 
 async def generate(request: ExplainRequest) -> ExplanationResponse:
     prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompt", "system_prompt.txt")
@@ -26,35 +23,7 @@ async def generate(request: ExplainRequest) -> ExplanationResponse:
         f"Features:\n{json.dumps(request.features, indent=2)}"
     )
 
-    model_name = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
-    ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-
-    payload = {
-        "model": model_name,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ],
-        "format": "json",
-        "stream": False
-    }
-
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(
-                f"{ollama_host}/api/chat",
-                json=payload,
-                timeout=120.0
-            )
-            response.raise_for_status()
-        except Exception as e:
-            raise HTTPException(status_code=502, detail=f"Ollama API error: {str(e)}")
-
-    data = response.json()
-    if "message" not in data or "content" not in data["message"]:
-        raise HTTPException(status_code=500, detail="Invalid response format from Ollama")
-
-    content = data["message"]["content"]
+    content = await get_ollama_completion(system_prompt, user_message)
     
     try:
         parsed_json = json.loads(content)
