@@ -1,4 +1,5 @@
 import os
+import time
 import httpx
 from fastapi import HTTPException
 from dotenv import load_dotenv
@@ -30,6 +31,8 @@ async def get_ollama_completion(system_prompt: str, user_message: str) -> str:
             "num_predict": 300,
         },
     }
+
+    start = time.perf_counter()
 
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
@@ -63,6 +66,9 @@ async def get_ollama_completion(system_prompt: str, user_message: str) -> str:
             status_code=500,
             detail=str(e),
         )
+
+    finally:
+        print(f"Ollama elapsed: {time.perf_counter() - start:.2f}s")
 
     data = response.json()
 
