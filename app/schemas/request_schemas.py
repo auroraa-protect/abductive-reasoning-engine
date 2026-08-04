@@ -13,6 +13,6 @@ class ExplainRequest(BaseModel):
     verdict: str = Field(..., description="ML model verdict")
     forgery_score: float = Field(..., ge=0.0, le=1.0, description="Forgery probability between 0 and 1.")
 
-    shap_features: list[shap_features]
+    shap_feature: list[shap_features]
 
     features: Dict[str, Union[int, float, str, bool, None]]
