@@ -17,7 +17,7 @@ async def generate(request: ExplainRequest) -> ExplanationResponse:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to read system prompt: {str(e)}")
 
-    shap_list = [{"feature": sf.feature, "contribution": sf.contribution} for sf in request.shap_features]
+    shap_list = [{"feature": sf.feature, "contribution": sf.contribution} for sf in request.shap_feature]
     user_message = (
         f"Document Type: {request.document_type}\n"
         f"Verdict: {request.verdict}\n"
