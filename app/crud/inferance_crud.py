@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from app.schemas.request_schemas import ExplainRequest
 from app.schemas.response_schemas import ExplanationResponse
 from app.dependencies.ollama_client import get_ollama_completion
+from app.dependencies.grok_client import get_groq_completion
 
 async def generate(request: ExplainRequest) -> ExplanationResponse:
     prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompt", "system_prompt.txt")
@@ -23,7 +24,7 @@ async def generate(request: ExplainRequest) -> ExplanationResponse:
         f"Features:\n{json.dumps(request.features, indent=2)}"
     )
 
-    content = await get_ollama_completion(system_prompt, user_message)
+    content = await get_groq_completion(system_prompt, user_message)
     
     try:
         parsed_json = json.loads(content)
