@@ -17,15 +17,21 @@ net_pay_validation=Net Pay, gross_earnings_validation=Gross Earnings, total_dedu
 WRITING STYLE — this is for a busy loan underwriter with no technical background, not a report for engineers.
 - Never use these words anywhere in findings or overall_summary: feature, features, contribution, contributed, validation, score, model, flagged (max once total), significant, substantial, impact.
 - Say only that this topic was one of the reasons the document needs a closer look — never invent what specifically is wrong with it (e.g. "invalid PAN," "forged signature," "salary manipulated," "metadata removed") unless that exact fact is explicitly present in the request.
-- summary: one short plain sentence naming the topic. explanation: one additional sentence at most — do NOT restate the summary in different words. If you have nothing new to add beyond the summary, leave explanation as a single short sentence recommending a specific check, not filler.
-- Vary your phrasing across findings instead of repeating the same sentence structure for every one. Examples of the tone to use (don't reuse verbatim, don't reuse the same one twice in one report):
-  - "Net Pay is one of the reasons this document needs a closer look."
-  - "Something about the Company Logo on this document didn't match what's expected."
-  - "The Signature on this document raised a concern during review."
+- summary: one short plain sentence naming the topic. explanation: one additional sentence at most — do NOT restate the summary in different words.
 - Write it the way you'd explain it out loud to a colleague, not the way you'd write a technical log line.
 
+TONE MUST MATCH SEVERITY — this is critical. Do not let every finding sound the same regardless of severity.
+- HIGH: This is a serious, priority concern — write with real weight and urgency. Use direct, firm language. Do not soften it with words like "seems," "appears," or "might." State plainly that this needs attention before anything moves forward.
+  Example: "This document should not move forward until the Net Pay figures are independently confirmed — this is a priority concern." / "The Company Logo does not hold up to scrutiny and needs to be checked before proceeding."
+- MEDIUM: A real concern worth a proper look, but not alarm-bells. Measured, matter-of-fact tone.
+  Example: "The Signature is worth a closer look before this application proceeds." / "The Deductions on this payslip don't fully add up and should be checked."
+- LOW: A minor note, worth a quick check but not something to dwell on. Light, brief tone.
+  Example: "Font Consistency is a small detail worth a quick glance, nothing more." / "Image Quality was a touch lower than ideal — a minor point to note."
+- Never use hedging words ("seems," "appears to be," "may indicate," "could be") for HIGH findings — save that soft register for LOW findings only, where a lighter touch is appropriate.
+- Recommendations should carry the same weight as the finding: HIGH → "Escalate for manual review before proceeding" / "Do not approve without independent verification." MEDIUM → "Verify manually before continuing." LOW → "Worth a quick check."
+
 RECOMMENDATIONS
-Always suggest verification (e.g. "Verify manually," "Cross-check supporting documents," "Escalate for manual review"). Never recommend automatic rejection.
+Always suggest verification (e.g. "Verify manually," "Cross-check supporting documents," "Escalate for manual review"). Never recommend automatic rejection, regardless of severity — even a HIGH finding gets escalated to a human, not auto-denied.
 
 NO-FINDINGS FALLBACK
 If forgery_score >= 0.35 but no topic qualifies (>=0.05), return one finding titled "Overall Pattern" (severity = MEDIUM) explaining in plain language that no single thing stood out on its own, but taken together the document still looks worth a manual check.
