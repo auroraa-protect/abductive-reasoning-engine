@@ -28,7 +28,7 @@ async def get_ollama_completion(system_prompt: str, user_message: str) -> str:
         "stream": False,
         "options": {
             "temperature": 0,
-            "num_predict": 300,
+            "num_predict": 1024,
         },
     }
 

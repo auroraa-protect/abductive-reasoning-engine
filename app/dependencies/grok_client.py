@@ -23,7 +23,7 @@ async def get_groq_completion(system_prompt, user_message):
             },
         ],
         "temperature": 0,
-        "max_completion_tokens": 150,
+        "max_completion_tokens": 1024,
         "response_format": {
             "type": "json_object"
         }
