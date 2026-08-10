@@ -14,12 +14,12 @@ SALARY_SLIP_FEATURE_REGISTRY = {
         "instruction": "Discuss image-level editing traces without claiming that editing occurred."
     },
 
-   "exif_anomaly": {
-       "title": "Document File Details",
-       "category": "image",
-       "severity": Severity.MEDIUM,
-       "action": "Review the original file for signs of editing or modification.",
-       "instruction": "Discuss file details that may warrant review for editing or modification, without claiming that the file was deliberately altered."
+    "exif_anomaly": {
+        "title": "Document File Details",
+        "category": "image",
+        "severity": Severity.MEDIUM,
+        "action": "Review the original file and its source.",
+        "instruction": "Discuss file details that warrant closer review without claiming a specific alteration."
     },
 
     "fft": {
