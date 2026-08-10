@@ -20,7 +20,7 @@ from app.registry.salary_slips_registry import (
 # ---------------------------------------------------------------------------
 
 def _severity_label(contribution: float) -> str:
-    """Map a SHAP contribution to a severity label."""
+    """Map a SHAP contribution to a severity label for unregistered features."""
     if contribution >= 0.30:
         return "HIGH"
     elif contribution >= 0.10:
@@ -85,14 +85,18 @@ def resolve(shap_features: list) -> RegistryContext:
     for sf in qualifying:
         entry = SALARY_SLIP_FEATURE_REGISTRY.get(sf.feature)
         if entry is None:
-            unknown.append({"feature": sf.feature, "contribution": sf.contribution})
+            unknown.append({
+                "feature": sf.feature,
+                "contribution": sf.contribution,
+                "severity": _severity_label(sf.contribution)
+            })
             continue
 
         resolved.append(
             ResolvedFeature(
                 feature=sf.feature,
                 contribution=sf.contribution,
-                severity=_severity_label(sf.contribution),
+                severity=entry["severity"],
                 title=entry["title"],
                 action=entry["action"],
                 instruction=entry["instruction"],
@@ -131,8 +135,9 @@ def build_registry_context_block(ctx: RegistryContext) -> str:
 
     # --- Unknown features (pass-through note) --------------------------------
     if ctx.unknown_features:
-        names = ", ".join(u["feature"] for u in ctx.unknown_features)
-        lines.append(f"Unregistered features (use prompt fallback rules): {names}")
+        lines.append("Unregistered features (use prompt fallback rules for title/explanation):")
+        for u in ctx.unknown_features:
+            lines.append(f"  - {u['feature']} (Severity: {u['severity']})")
         lines.append("")
 
     return "\n".join(lines)
