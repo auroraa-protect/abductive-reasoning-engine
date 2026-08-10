@@ -64,7 +64,7 @@ def resolve(shap_features: list) -> RegistryContext:
     Resolve a list of shap_feature objects (with .feature / .contribution)
     against the salary-slip registry.
 
-    Only features with contribution >= 0.05 are considered (matching the
+    Only features with positive contribution (> 0.0) are considered (matching the
     prompt's evidence rules).  The caller may pass the full list; this
     function filters internally.
 
@@ -72,17 +72,14 @@ def resolve(shap_features: list) -> RegistryContext:
     - individual_findings  (known features)
     - unknown_features     (feature keys not present in the registry)
     """
-    # 1. Filter to qualifying SHAP entries
-    qualifying = [sf for sf in shap_features if sf.contribution >= 0.05]
-
-    if not qualifying:
+    if not shap_features:
         return RegistryContext()
 
     # 2. Resolve each feature against the registry
     resolved: List[ResolvedFeature] = []
     unknown: List[dict] = []
 
-    for sf in qualifying:
+    for sf in shap_features:
         entry = SALARY_SLIP_FEATURE_REGISTRY.get(sf.feature)
         if entry is None:
             unknown.append({

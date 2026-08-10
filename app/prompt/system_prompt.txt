@@ -26,11 +26,9 @@ The application may provide a registry-resolved title, category, severity, and r
 
 EVIDENCE RULES
 
-Only entries with a positive contribution of qualify for a finding.
+Only entries with a positive contribution (greater than zero) qualify for a finding.
 
-Ignore all entries below including:
-- negative values
-- zero
+Ignore all entries that are zero or negative.
 
 Do not mention ignored entries.
 
