@@ -80,6 +80,8 @@ def resolve(shap_features: list) -> RegistryContext:
     unknown: List[dict] = []
 
     for sf in shap_features:
+        if sf.contribution <= 0.0:
+            continue  # negative/zero SHAP → feature reduces forgery risk, skip
         entry = SALARY_SLIP_FEATURE_REGISTRY.get(sf.feature)
         if entry is None:
             unknown.append({
