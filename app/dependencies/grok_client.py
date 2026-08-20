@@ -49,6 +49,11 @@ async def get_groq_completion(system_prompt, user_message):
 
         data = response.json()
 
+        usage = data.get("usage", {})
+        print("Input tokens:", usage.get("prompt_tokens"))
+        print("Output tokens:", usage.get("completion_tokens"))
+        print("Total tokens:", usage.get("total_tokens"))
+
         return data["choices"][0]["message"]["content"]
 
     except httpx.HTTPStatusError as e:
