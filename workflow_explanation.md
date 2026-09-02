@@ -24,8 +24,7 @@ graph TD
 
 ### 1. Request Input & Validation
 The API endpoint (`/explain`) receives a JSON payload. Pydantic validates it against the `ExplainRequest` schema in [request_schemas.py](app/schemas/request_schemas.py):
-* **SHAP Features:** Features and their mathematical contributions.
-* **Features:** Full set of document features.
+* **SHAP Features:** Positive evidence entries and their contributions.
 * **Context:** Mismatch reasons for flagged checks.
 * **Individual Data:** Extracted identity metadata (e.g. employee name, PAN number, company name).
 
@@ -43,10 +42,7 @@ The user message is built by serializing the filtered outputs:
 ```python
 user_message = (
     f"Document Type: {request.document_type}\n"
-    f"Verdict: {request.verdict}\n"
-    f"Forgery Score: {request.forgery_score}\n\n"
     f"SHAP Features:\n{json.dumps(shap_list, indent=2)}\n\n"
-    f"Features:\n{json.dumps(filtered_features, indent=2)}\n\n"
     f"Context:\n{json.dumps(context_list, indent=2)}\n\n"
     f"Individual Data:\n{json.dumps(individual_list, indent=2)}"
     f"{registry_block}"

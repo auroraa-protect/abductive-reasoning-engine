@@ -1,9 +1,9 @@
 # Auroraa Fraud Explanation Engine
 
 ## Overview
-The **Fraud Explanation Engine** is a FastAPI-based microservice designed to act as an AI Fraud Analyst for Indian financial institutions. It takes the verdict, forgery score, and SHAP feature contributions from a fraud detection model (such as LightGBM) and generates plain-language, easy-to-understand explanations for human loan underwriters. 
+The **Fraud Explanation Engine** is a FastAPI-based microservice designed to act as an AI Fraud Analyst for Indian financial institutions. It takes only the relevant SHAP evidence, context, and individual document data needed to explain the supplied findings, and generates plain-language case notes for human loan underwriters.
 
-The engine uses advanced LLMs (via Grok, Groq, or local Ollama clients) to translate complex SHAP scores into actionable findings without inventing information or contradicting the underlying model's verdict.
+The engine uses advanced LLMs (via Grok, Groq, or local Ollama clients) to translate the supplied evidence into actionable findings without inventing information or reinterpreting model output.
 
 ## Features
 - **Explainable AI for Fraud Analysis**: Converts SHAP contributions into human-readable text.

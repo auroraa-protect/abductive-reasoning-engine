@@ -8,7 +8,7 @@ It acts as the bridge between the API request and the LLM inference step.
 Workflow:
 1. Reads the strict instructions from `system_prompt.txt`.
 2. Resolves incoming SHAP features against a predefined feature registry to fetch standardized titles, severities, and recommendations.
-3. Filters the incoming payload (`shap_features`, `context`, and `features`) to only include data for features with a positive SHAP contribution. This significantly reduces the payload size and token cost.
+3. Filters the incoming payload (`shap_feature` and `context`) to only include data for features with a positive SHAP contribution. This significantly reduces the payload size and token cost.
 4. Serializes the filtered data, individual document values, and registry blocks into a structured user message.
 5. Sends the combined prompt to the Groq LLM to generate a JSON-formatted `ExplanationResponse` containing underwriter-ready case notes.
 """
@@ -36,18 +36,14 @@ async def generate(request: ExplainRequest) -> ExplanationResponse:
     registry_block = build_registry_context_block(registry_ctx)
 
     positive_features = {sf.feature for sf in request.shap_feature if sf.contribution > 0}
-    
+
     shap_list = [{"feature": sf.feature, "contribution": sf.contribution} for sf in request.shap_feature if sf.contribution > 0]
-    filtered_features = {k: v for k, v in request.features.items() if k in positive_features}
     context_list = [{"feature": c.feature, "reason": c.reason} for c in request.context if c.feature in positive_features]
     individual_list = [{"field": idata.field, "value": idata.value} for idata in request.individual_data]
 
     user_message = (
         f"Document Type: {request.document_type}\n"
-        f"Verdict: {request.verdict}\n"
-        f"Forgery Score: {request.forgery_score}\n\n"
         f"SHAP Features:\n{json.dumps(shap_list, indent=2)}\n\n"
-        f"Features:\n{json.dumps(filtered_features, indent=2)}\n\n"
         f"Context:\n{json.dumps(context_list, indent=2)}\n\n"
         f"Individual Data:\n{json.dumps(individual_list, indent=2)}"
         f"{registry_block}"

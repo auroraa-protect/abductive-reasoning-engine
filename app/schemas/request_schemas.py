@@ -19,13 +19,6 @@ class individual_data(BaseModel):
 
 class ExplainRequest(BaseModel):
     document_type: str = Field(..., description="Document type")
-    verdict: str = Field(..., description="ML model verdict")
-    forgery_score: float = Field(..., ge=0.0, le=1.0, description="Forgery probability between 0 and 1.")
-
     shap_feature: list[shap_features]
-
-    features: Dict[str, Union[int, float, str, bool, None]]
-
     context: list[context_features]
-
     individual_data: list[individual_data]
