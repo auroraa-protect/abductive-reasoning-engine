@@ -1,6 +1,6 @@
 from typing import Dict, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class shap_features(BaseModel):
@@ -18,6 +18,8 @@ class individual_data(BaseModel):
 
 
 class ExplainRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid") # Forbid extra fields in the request payload
+
     document_type: str = Field(..., description="Document type")
     shap_feature: list[shap_features]
     context: list[context_features]
