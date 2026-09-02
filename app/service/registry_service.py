@@ -14,10 +14,19 @@ from app.registry.salary_slips_registry import (
     SALARY_SLIP_FEATURE_REGISTRY,
 )
 
+from app.registry.bank_statement_registry import (     
+    BANK_STATEMENT_FEATURE_REGISTRY
+)
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+DOCUMENT_REGISTRIES = {
+    "salary_slip": SALARY_SLIP_FEATURE_REGISTRY,
+    "bank_statement": BANK_STATEMENT_FEATURE_REGISTRY
+}
 
 def _severity_label(contribution: float) -> str:
     """Map a SHAP contribution to a severity label for unregistered features."""
@@ -82,7 +91,7 @@ def resolve(shap_features: list) -> RegistryContext:
     for sf in shap_features:
         if sf.contribution <= 0.0:
             continue  # negative/zero SHAP → feature reduces forgery risk, skip
-        entry = SALARY_SLIP_FEATURE_REGISTRY.get(sf.feature)
+        entry = DOCUMENT_REGISTRIES.get(sf.feature)
         if entry is None:
             unknown.append({
                 "feature": sf.feature,
