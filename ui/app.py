@@ -1,403 +1,461 @@
-"""
-Auroraa R&D Inference Engine - Streamlit Testing Interface
------------------------------------------------------------
-R&D experimentation interface for testing Auroraa's LLM-based abductive reasoning engine.
-Communicates with the existing FastAPI backend via HTTP.
-"""
+"""Auroraa R&D inference workspace."""
 
-import os
 import json
+import os
+from typing import Any, Dict, Optional
+
 import streamlit as st
 
-from ui.api_client import (
-    DEFAULT_BACKEND_URL,
-    normalize_url,
-    check_health,
-    run_inference,
-    get_metrics,
-    reset_metrics,
-)
-from ui.sample_data import (
-    ABC_TEXTILE_JSON,
-    SAMPLE_CASES,
-    SAMPLE_TEXT_NARRATIVE,
-)
-from ui.components import (
-    inject_custom_styles,
-    render_metrics_panel,
-    render_results_panel,
-    extract_file_content,
-)
+if __package__:
+    from .api_client import (
+        DEFAULT_BACKEND_URL,
+        check_health,
+        get_metrics,
+        normalize_url,
+        run_inference,
+    )
+    from .components import (
+        extract_file_content,
+        render_metrics_panel,
+        render_results_panel,
+    )
+    from .sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
+else:
+    from api_client import (
+        DEFAULT_BACKEND_URL,
+        check_health,
+        get_metrics,
+        normalize_url,
+        run_inference,
+    )
+    from components import (
+        extract_file_content,
+        render_metrics_panel,
+        render_results_panel,
+    )
+    from sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
 
-# ---------------------------------------------------------------------------
-# Page Configuration
-# ---------------------------------------------------------------------------
+
 st.set_page_config(
-    page_title="Auroraa R&D | Abductive Reasoning Engine",
-    page_icon="⚡",
+    page_title="Auroraa | R&D Inference",
+    page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Inject custom styles for dark navy sidebar and readable light workspace
-inject_custom_styles()
 
-# ---------------------------------------------------------------------------
-# Session State Initialization
-# ---------------------------------------------------------------------------
-if "json_input" not in st.session_state:
-    # Preload ABC Textile Industries test case by default
-    st.session_state.json_input = ABC_TEXTILE_JSON
-
-if "last_response" not in st.session_state:
+def _start_new_test() -> None:
     st.session_state.last_response = None
+    st.session_state.last_payload = None
+    st.session_state.last_error = None
+    st.session_state.json_input = ""
+    st.session_state.input_mode = "JSON input"
+    st.session_state.text_case_id = ""
+    st.session_state.text_declared = ""
+    st.session_state.text_observed = ""
+    st.session_state.file_case_id = ""
+    st.session_state.file_notes = ""
+    st.session_state.upload_generation += 1
 
-if "last_error" not in st.session_state:
+
+def _load_sample_case(sample: Dict[str, Any]) -> None:
+    st.session_state.input_mode = "JSON input"
+    st.session_state.json_input = sample["json_str"]
+    st.session_state.text_case_id = sample["case_id"]
+    st.session_state.text_declared = sample.get("text_narrative", "")
+    st.session_state.text_observed = ""
     st.session_state.last_error = None
 
-if "text_case_id" not in st.session_state:
-    st.session_state.text_case_id = "AUR-CASE-001"
 
-if "text_declared" not in st.session_state:
-    st.session_state.text_declared = (
-        "ABC Textile Industries (Surat). 5 years operational, 15 workers. "
-        "Declared monthly turnover: ₹15,00,000. Declared monthly production: 8,000 meters fabric. "
-        "Production capacity: 10,000 meters/month."
-    )
-
-if "text_observed" not in st.session_state:
-    st.session_state.text_observed = (
-        "1. Purchase bill PUR-001: 1,000 kg cotton @ ₹150/kg (₹1,50,000).\n"
-        "2. Production records: 1,600 kg cotton consumed to produce 8,000 meters fabric.\n"
-        "3. Sales invoice SALE-001: ₹2,50,000 to ABC Garments.\n"
-        "4. Bank statement: ₹2,50,000 incoming credit from ABC Garments.\n"
-        "5. Premises video VID-001: 5 power looms operational, fabric rolls stacked.\n"
-        "6. Electricity bill: 4,500 units consumed (₹38,000)."
-    )
-
-# ---------------------------------------------------------------------------
-# Sidebar: Backend Architecture & Configuration
-# ---------------------------------------------------------------------------
-with st.sidebar:
-    st.markdown("### ⚡ Auroraa R&D Engine")
-    st.caption("LLM Abductive Reasoning Testing Suite")
-    st.markdown("---")
-
-    st.markdown("#### 🔌 Backend Connection")
-    backend_url = st.text_input(
-        "FastAPI Service URL",
-        value=os.getenv("AURORAA_BACKEND_URL") or os.getenv("BACKEND_URL") or DEFAULT_BACKEND_URL,
-        help="Configurable via AURORAA_BACKEND_URL or BACKEND_URL environment variable.",
-    )
-    backend_url = normalize_url(backend_url)
-
-    # Health check button & status
-    col_h1, col_h2 = st.columns([1, 1])
-    with col_h1:
-        if st.button("Ping Backend", use_container_width=True):
-            st.session_state.health_status = check_health(backend_url)
-
-    health = st.session_state.get("health_status") or check_health(backend_url)
-    if health.get("ok"):
-        st.success(f"Online: {health.get('status', 'healthy')}")
-    else:
-        st.error("Offline: Backend unreachable")
-        st.caption("Run: `uvicorn app.main:app --port 8000`")
-
-    st.markdown("---")
-
-    # Sample Case Quick Selector
-    st.markdown("#### 📂 Preloaded Test Cases")
-    selected_sample = st.selectbox(
-        "Choose Industry Case",
-        options=list(SAMPLE_CASES.keys()),
-        index=0,  # Default: ABC Textile Industries
-    )
-    sample_info = SAMPLE_CASES[selected_sample]
-    st.caption(f"**Industry:** {sample_info['industry']}")
-    st.caption(f"*{sample_info['description']}*")
-
-    if st.button("Load This Case Into JSON Input", use_container_width=True):
-        st.session_state.json_input = sample_info["json_str"]
-        st.session_state.text_case_id = sample_info["case_id"]
-        st.toast(f"Loaded {sample_info['case_id']} into input panel!")
-        st.rerun()
-
-    st.markdown("---")
-
-    # Cumulative Metrics Overview
-    with st.expander("📊 Cumulative Engine Metrics", expanded=False):
-        cum_metrics = get_metrics(backend_url)
-        if cum_metrics.get("ok"):
-            m = cum_metrics.get("metrics", {})
-            st.write(f"**Total Calls:** {m.get('total_calls', 0)}")
-            st.write(f"**Total Tokens:** {m.get('total_tokens', 0):,}")
-            st.write(f"**Prompt Tokens:** {m.get('total_input_tokens', 0):,}")
-            st.write(f"**Completion Tokens:** {m.get('total_output_tokens', 0):,}")
-            st.write(f"**Avg Latency:** {m.get('average_latency_ms', 0)} ms")
-            st.write(f"**Est. Cost:** ${m.get('estimated_cost_usd', 0):.5f}")
-            if st.button("Reset Metrics Log"):
-                reset_metrics(backend_url)
-                st.toast("Cumulative metrics reset.")
-                st.rerun()
-        else:
-            st.caption("Cumulative metrics unavailable (connect to backend).")
-
-    st.markdown("---")
-    st.caption("Strictly for R&D evaluation. Streamlit UI → FastAPI → LLM Reasoning Pipeline.")
+def _load_abc_textile() -> None:
+    st.session_state.input_mode = "JSON input"
+    st.session_state.json_input = ABC_TEXTILE_JSON
 
 
-# ---------------------------------------------------------------------------
-# Main Header
-# ---------------------------------------------------------------------------
-st.title("Auroraa Abductive Reasoning Engine")
-st.markdown(
-    "Automated MSME business claim verification using deterministic Python reconciliations and single-pass LLM abductive reasoning."
+def _clear_text_input() -> None:
+    st.session_state.text_case_id = ""
+    st.session_state.text_declared = ""
+    st.session_state.text_observed = ""
+
+
+def _clear_file_input() -> None:
+    st.session_state.file_case_id = ""
+    st.session_state.file_notes = ""
+    st.session_state.upload_generation += 1
+
+
+@st.cache_data(ttl=15, show_spinner=False)
+def _backend_health(base_url: str) -> Dict[str, Any]:
+    return check_health(base_url)
+
+
+st.session_state.setdefault("json_input", ABC_TEXTILE_JSON)
+st.session_state.setdefault("input_mode", "JSON input")
+st.session_state.setdefault("last_response", None)
+st.session_state.setdefault("last_payload", None)
+st.session_state.setdefault("last_error", None)
+st.session_state.setdefault("text_case_id", "AUR-CASE-001")
+st.session_state.setdefault(
+    "text_declared",
+    "ABC Textile Industries (Surat). 5 years operational, 15 workers. "
+    "Declared monthly turnover: ₹15,00,000. Declared monthly production: "
+    "8,000 meters fabric. Production capacity: 10,000 meters/month.",
+)
+st.session_state.setdefault(
+    "text_observed",
+    "1. Purchase bill PUR-001: 1,000 kg cotton @ ₹150/kg (₹1,50,000).\n"
+    "2. Production records: 1,600 kg cotton consumed to produce 8,000 meters fabric.\n"
+    "3. Sales invoice SALE-001: ₹2,50,000 to ABC Garments.\n"
+    "4. Bank statement: ₹2,50,000 incoming credit from ABC Garments.\n"
+    "5. Premises video VID-001: 5 power looms operational, fabric rolls stacked.\n"
+    "6. Electricity bill: 4,500 units consumed (₹38,000).",
+)
+st.session_state.setdefault("file_case_id", "AUR-CASE-UPLOAD-001")
+st.session_state.setdefault("file_notes", "")
+st.session_state.setdefault("upload_generation", 0)
+st.session_state.setdefault("history_entries", None)
+st.session_state.setdefault(
+    "backend_url",
+    os.getenv("AURORAA_BACKEND_URL")
+    or os.getenv("BACKEND_URL")
+    or DEFAULT_BACKEND_URL,
 )
 
-st.markdown("---")
 
-# ---------------------------------------------------------------------------
-# Section A: Input Panel
-# ---------------------------------------------------------------------------
-st.subheader("1. Case Input Panel")
+with st.sidebar:
+    st.title("Auroraa")
+    st.caption("R&D inference engine")
+    st.button(
+        "New test",
+        icon=":material/add:",
+        on_click=_start_new_test,
+        key="new_test",
+    )
 
-input_tab1, input_tab2, input_tab3 = st.tabs([
-    "📝 Option 1: JSON Input (Structured)",
-    "📁 Option 2: File Upload (Multi-Format)",
-    "💬 Option 3: Text Input (Natural Language)",
-])
+    st.subheader("Sample cases")
+    selected_sample = st.selectbox(
+        "Choose a sample case",
+        options=list(SAMPLE_CASES.keys()),
+        label_visibility="collapsed",
+        key="sample_selection",
+    )
+    sample_info = SAMPLE_CASES[selected_sample]
+    st.caption(f"{sample_info['industry']} · {sample_info['description']}")
+    st.button(
+        "Load sample",
+        icon=":material/folder_open:",
+        on_click=_load_sample_case,
+        args=(sample_info,),
+        key="load_sample",
+    )
 
-payload_to_send = None
-validation_error = None
+    st.subheader("Backend")
+    backend_url = normalize_url(
+        st.text_input("FastAPI URL", key="backend_url")
+    )
+    if st.button("Check connection", icon=":material/wifi:", key="check_connection"):
+        _backend_health.clear()
+    health = _backend_health(backend_url)
+    if health.get("ok"):
+        st.markdown(":green[● Online]")
+    else:
+        st.markdown(":red[● Offline]")
+        st.caption("Start the API with `uvicorn app.main:app --port 8000`.")
 
-# --- TAB 1: JSON INPUT ---
-with input_tab1:
-    col_t1_top, col_t1_btns = st.columns([3, 1])
-    with col_t1_top:
-        st.markdown(
-            "Paste structured business evidence JSON. Preloaded by default with **ABC Textile Industries** test case."
+    model_info = st.session_state.last_response or {}
+    usage_info = model_info.get("token_usage") or {}
+    provider = usage_info.get("model", "Shown after inference")
+    st.caption(f"Current provider: {provider}")
+
+    with st.expander("Inference history"):
+        if st.button("Refresh history", key="refresh_history"):
+            metrics_result = get_metrics(backend_url)
+            if metrics_result.get("ok"):
+                st.session_state.history_entries = metrics_result.get(
+                    "metrics", {}
+                ).get("call_history", [])
+            else:
+                st.error(metrics_result.get("error", "Could not load history."))
+
+        history = st.session_state.history_entries
+        if history is None:
+            st.caption("History is available from the backend metrics endpoint.")
+        elif not history:
+            st.caption("No inference calls recorded yet.")
+        else:
+            for entry in reversed(history[-5:]):
+                st.text(
+                    f"{entry.get('case_id', 'Unknown case')} · "
+                    f"{entry.get('timestamp', '')} · "
+                    f"{entry.get('total_tokens', '—')} tokens"
+                )
+
+
+st.title("Auroraa")
+st.subheader("Business Intelligence & Abductive Reasoning")
+st.markdown(
+    "Understand businesses through evidence, discover contradictions and explore possible explanations."
+)
+
+last_response = st.session_state.last_response
+if last_response:
+    current_case_id = last_response.get("case_id", "—")
+    inference_status = str(last_response.get("status", "completed")).replace("_", " ").title()
+else:
+    current_case_id = "—"
+    inference_status = "Ready"
+st.text(f"Case ID: {current_case_id}    ·    Inference status: {inference_status}")
+
+st.header("Submit business evidence")
+input_mode = st.segmented_control(
+    "Input method",
+    options=["JSON input", "Text input", "File upload"],
+    key="input_mode",
+)
+input_mode = input_mode or "JSON input"
+
+uploaded_files = []
+file_extracted_texts = []
+file_json_candidate = None
+
+if input_mode == "JSON input":
+    action_columns = st.columns(3)
+    with action_columns[0]:
+        st.button(
+            "Load ABC Textile sample",
+            icon=":material/description:",
+            on_click=_load_abc_textile,
+            key="load_abc_textile",
         )
-    with col_t1_btns:
-        c_btn1, c_btn2 = st.columns(2)
-        with c_btn1:
-            if st.button("Load ABC Textile", use_container_width=True, help="Reset to standard ABC Textile Industries test case"):
-                st.session_state.json_input = ABC_TEXTILE_JSON
-                st.rerun()
-        with c_btn2:
-            if st.button("Clear JSON", use_container_width=True):
-                st.session_state.json_input = ""
-                st.rerun()
+    with action_columns[1]:
+        if st.button("Clear JSON", icon=":material/delete:", key="clear_json"):
+            st.session_state.json_input = ""
+    with action_columns[2]:
+        validate_json = st.button(
+            "Validate JSON",
+            icon=":material/check_circle:",
+            key="validate_json",
+        )
 
-    json_area = st.text_area(
-        "Business Evidence JSON Payload",
-        value=st.session_state.json_input,
-        height=320,
-        placeholder="{\n  \"case_id\": \"AUR-CASE-001\",\n  \"business_profile\": { ... },\n  \"purchase_evidence\": { ... }\n}",
+    json_input = st.text_area(
+        "Business evidence JSON",
+        key="json_input",
+        height=360,
+        placeholder='{\n  "case_id": "AUR-CASE-001",\n  "business_profile": {}\n}',
     )
-    # Sync edited text into session state
-    st.session_state.json_input = json_area
-
-
-# --- TAB 2: FILE UPLOAD ---
-with input_tab2:
-    st.markdown("Upload documentary, financial, or physical inspection files to evaluate:")
-    uploaded_files = st.file_uploader(
-        "Supported formats: PDF, DOCX, TXT, JSON, Images, Videos",
-        type=["pdf", "docx", "txt", "json", "png", "jpg", "jpeg", "webp", "mp4", "mov", "avi"],
-        accept_multiple_files=True,
-    )
-
-    file_extracted_texts = []
-    file_json_candidate = None
-
-    if uploaded_files:
-        st.markdown("##### Extracted File Observations & Content Preview:")
-        for uf in uploaded_files:
-            text_cont, parsed_j, ftype = extract_file_content(uf)
-            with st.expander(f"📄 {uf.name} ({ftype})", expanded=False):
-                if parsed_j:
-                    st.json(parsed_j)
-                    file_json_candidate = parsed_j
-                    if st.button(f"Load '{uf.name}' into Option 1 JSON tab", key=f"load_j_{uf.name}"):
-                        st.session_state.json_input = json.dumps(parsed_j, indent=2)
-                        st.success("Loaded into JSON tab!")
-                elif text_cont:
-                    st.text_area(f"Extracted content ({uf.name})", value=text_cont, height=140, disabled=True)
-                    file_extracted_texts.append(f"=== File: {uf.name} ({ftype}) ===\n{text_cont}")
-
-    file_case_id = st.text_input("Case ID for File Evidence", value="AUR-CASE-UPLOAD-001")
-    file_narrative_notes = st.text_area(
-        "Additional Inspector Notes / Declared Profile (Optional)",
-        placeholder="Enter any declared turnover, production figures, or notes not present in the files...",
-        height=100,
-    )
-
-
-# --- TAB 3: TEXT INPUT ---
-with input_tab3:
-    st.markdown(
-        "Paste free-form natural language business descriptions and extracted evidence. Users are not forced to fill every field."
-    )
-    col_txt_id, col_txt_preset = st.columns([2, 1])
-    with col_txt_id:
-        text_case_id = st.text_input("Verification Case ID", value=st.session_state.text_case_id)
-    with col_txt_preset:
-        if st.button("Load Narrative Sample", use_container_width=True):
-            st.session_state.text_case_id = "AUR-CASE-001"
-            st.session_state.text_declared = (
-                "ABC Textile Industries (Surat). 5 years operational, 15 workers. "
-                "Declared monthly turnover: ₹15,00,000. Declared monthly production: 8,000 meters fabric. "
-                "Production capacity: 10,000 meters/month."
-            )
-            st.session_state.text_observed = (
-                "1. Purchase bill PUR-001: 1,000 kg cotton @ ₹150/kg (₹1,50,000).\n"
-                "2. Production records: 1,600 kg cotton consumed to produce 8,000 meters fabric.\n"
-                "3. Sales invoice SALE-001: ₹2,50,000 to ABC Garments.\n"
-                "4. Bank statement: ₹2,50,000 incoming credit from ABC Garments.\n"
-                "5. Premises video VID-001: 5 power looms operational, fabric rolls stacked.\n"
-                "6. Electricity bill: 4,500 units consumed (₹38,000)."
-            )
-            st.rerun()
-
-    text_declared = st.text_area(
-        "Declared Business Claims & Profile",
-        value=st.session_state.text_declared,
-        height=110,
-        placeholder="e.g. Business activity, declared monthly turnover, production capacity, number of employees...",
-    )
-    st.session_state.text_declared = text_declared
-
-    text_observed = st.text_area(
-        "Observed Documentary, Financial & Physical Evidence",
-        value=st.session_state.text_observed,
-        height=140,
-        placeholder="e.g. Observed purchase invoices, bank credit transactions, inventory photos, machinery inspections...",
-    )
-    st.session_state.text_observed = text_observed
-
-
-# ---------------------------------------------------------------------------
-# Action Buttons: RUN INFERENCE & CLEAR
-# ---------------------------------------------------------------------------
-st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-col_run, col_clear, col_space = st.columns([2, 1, 4])
-
-with col_run:
-    run_clicked = st.button("🚀 RUN INFERENCE", type="primary", use_container_width=True)
-
-with col_clear:
-    if st.button("🗑️ Clear Inputs", use_container_width=True):
-        st.session_state.json_input = ""
-        st.session_state.text_declared = ""
-        st.session_state.text_observed = ""
-        st.rerun()
-
-# ---------------------------------------------------------------------------
-# Inference Execution Logic
-# ---------------------------------------------------------------------------
-if run_clicked:
-    # Determine which payload to use based on which input has data
-    # Priority: If JSON input is populated, use it. If files exist, construct from files. If text fields exist, construct from text.
-    payload = None
-
-    # Check JSON Area
-    if st.session_state.json_input and st.session_state.json_input.strip():
+    if validate_json:
         try:
-            payload = json.loads(st.session_state.json_input)
-        except json.JSONDecodeError as e:
-            st.error(f"Invalid JSON in Option 1: {str(e)}")
-            payload = None
+            parsed_json = json.loads(json_input)
+            if not isinstance(parsed_json, dict):
+                st.error("The JSON payload must be an object.")
+            else:
+                st.success("Valid JSON object.")
+        except json.JSONDecodeError as error:
+            st.error(f"Invalid JSON: {error}")
 
-    # Fallback to File Uploads if JSON was empty
+elif input_mode == "Text input":
+    text_case_id = st.text_input("Case ID", key="text_case_id")
+    text_declared = st.text_area(
+        "Business information and declared claims",
+        key="text_declared",
+        height=150,
+        placeholder="Describe the business activity, age, employees, turnover, production, or capacity.",
+    )
+    text_observed = st.text_area(
+        "Observations and supporting evidence",
+        key="text_observed",
+        height=220,
+        placeholder="Add observed invoices, bank records, inventory, production, machinery, or utilities evidence.",
+    )
+    st.button(
+        "Clear text",
+        icon=":material/delete:",
+        on_click=_clear_text_input,
+        key="clear_text",
+    )
+
+else:
+    uploaded_files = st.file_uploader(
+        "Upload business evidence",
+        type=[
+            "pdf",
+            "docx",
+            "txt",
+            "json",
+            "png",
+            "jpg",
+            "jpeg",
+            "webp",
+            "mp4",
+            "mov",
+            "avi",
+            "mkv",
+        ],
+        accept_multiple_files=True,
+        key=f"evidence_files_{st.session_state.upload_generation}",
+        help="Supported inputs: PDF, DOCX, TXT, JSON, images, and video.",
+    )
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            text_content, parsed_json, file_type = extract_file_content(uploaded_file)
+            with st.expander(f"{uploaded_file.name} · {file_type}"):
+                if parsed_json is not None:
+                    st.json(parsed_json)
+                    file_json_candidate = parsed_json
+                elif text_content:
+                    st.text_area(
+                        f"Extracted content from {uploaded_file.name}",
+                        value=text_content,
+                        height=140,
+                        disabled=True,
+                        key=f"preview_{uploaded_file.name}",
+                    )
+                    file_extracted_texts.append(
+                        f"=== File: {uploaded_file.name} ({file_type}) ===\n{text_content}"
+                    )
+                elif file_type.startswith(("Invalid JSON", "Could not read")):
+                    st.error(file_type)
+                elif file_type.startswith(
+                    ("Image attachment", "Video attachment")
+                ):
+                    st.info(
+                        "The FastAPI request accepts structured image/video analysis, "
+                        "but does not receive raw media files. Add verified observations "
+                        "in the notes or provide analysis in JSON."
+                    )
+                elif file_type.startswith("PDF has no selectable text"):
+                    st.warning(
+                        "No text could be extracted from this PDF. Add verified observations "
+                        "in the notes or provide a text-searchable document."
+                    )
+
+    file_case_id = st.text_input("Case ID", key="file_case_id")
+    file_notes = st.text_area(
+        "Additional business information or inspector notes",
+        key="file_notes",
+        height=120,
+    )
+    st.button(
+        "Clear file inputs",
+        icon=":material/delete:",
+        on_click=_clear_file_input,
+        key="clear_files",
+    )
+
+run_clicked = st.button(
+    "Run inference",
+    type="primary",
+    icon=":material/psychology:",
+    key="run_inference",
+)
+
+if run_clicked:
+    payload: Optional[Dict[str, Any]] = None
+    if input_mode == "JSON input":
+        if not json_input.strip():
+            st.warning("Add a JSON payload or load a sample case before running inference.")
+        else:
+            try:
+                parsed_payload = json.loads(json_input)
+                if isinstance(parsed_payload, dict):
+                    payload = parsed_payload
+                else:
+                    st.error("The JSON payload must be an object.")
+            except json.JSONDecodeError as error:
+                st.error(f"Invalid JSON: {error}")
+    elif input_mode == "Text input":
+        combined_text = "\n\n".join(
+            value.strip()
+            for value in (text_declared, text_observed)
+            if value and value.strip()
+        )
+        if combined_text:
+            payload = {
+                "case_id": text_case_id.strip() or "AUR-CASE-TEXT",
+                "declared_information": text_declared.strip() or None,
+                "observed_evidence": text_observed.strip() or None,
+                "text": combined_text,
+            }
+        else:
+            st.warning("Add business information or observations before running inference.")
     elif uploaded_files:
-        if file_json_candidate:
+        if file_json_candidate is not None:
             payload = file_json_candidate
         else:
             combined_file_text = "\n\n".join(file_extracted_texts)
-            if file_narrative_notes:
-                combined_file_text += f"\n\n=== Inspector Notes ===\n{file_narrative_notes}"
-            payload = {
-                "case_id": file_case_id or "AUR-CASE-UPLOAD",
-                "text": combined_file_text.strip(),
-                "observed_evidence": f"Uploaded {len(uploaded_files)} verification evidence files.",
-            }
-
-    # Fallback to Text Input
-    elif st.session_state.text_declared or st.session_state.text_observed:
-        payload = {
-            "case_id": st.session_state.text_case_id or "AUR-CASE-TEXT",
-            "declared_information": st.session_state.text_declared.strip() if st.session_state.text_declared else None,
-            "observed_evidence": st.session_state.text_observed.strip() if st.session_state.text_observed else None,
-            "text": f"{st.session_state.text_declared}\n\n{st.session_state.text_observed}".strip(),
-        }
-
-    else:
-        st.warning("Please provide input in either Option 1 (JSON), Option 2 (Files), or Option 3 (Text) before running inference.")
-
-    if payload:
-        with st.spinner("Executing Abductive Reasoning Engine... (Deterministic Math Reconciliations + LLM Inference)"):
-            success, result = run_inference(payload, base_url=backend_url)
-            if success:
-                # Keep previous results visible until a new inference completes successfully!
-                st.session_state.last_response = result
-                st.session_state.last_error = None
-                st.toast("Inference completed successfully!")
+            if file_notes.strip():
+                combined_file_text += f"\n\n=== Inspector Notes ===\n{file_notes.strip()}"
+            if combined_file_text.strip():
+                payload = {
+                    "case_id": file_case_id.strip() or "AUR-CASE-UPLOAD",
+                    "text": combined_file_text.strip(),
+                }
             else:
-                st.session_state.last_error = result.get("error", "Unknown inference failure.")
-                st.error(f"Inference Failed:\n\n{st.session_state.last_error}")
+                st.warning("No readable content was found in the uploaded files.")
+    else:
+        st.warning("Upload one or more files before running inference.")
 
-# If previous inference error is active, display warning
+    if payload is not None:
+        with st.spinner("Running abductive reasoning…"):
+            success, result = run_inference(payload, base_url=backend_url)
+        if success:
+            if isinstance(result, dict):
+                st.session_state.last_response = result
+                st.session_state.last_payload = payload
+                st.session_state.last_error = None
+                st.toast("Inference completed.")
+            else:
+                error_message = "The backend returned a non-object inference response."
+                st.session_state.last_error = error_message
+                st.error(error_message)
+        else:
+            error_message = result.get("error", "Inference failed without an error message.")
+            st.session_state.last_error = error_message
+            st.error(f"Inference failed: {error_message}")
+
 if st.session_state.last_error and not run_clicked:
-    st.error(f"Last Inference Error: {st.session_state.last_error}")
+    st.error(f"Last inference error: {st.session_state.last_error}")
 
-# ---------------------------------------------------------------------------
-# Section B & C: Results Panel & Inference Metrics
-# ---------------------------------------------------------------------------
 if st.session_state.last_response:
-    resp = st.session_state.last_response
-    st.markdown("---")
+    response = st.session_state.last_response
+    st.header(f"Inference results · {response.get('case_id', 'Unknown case')}")
+    status_text = str(response.get("status", "completed")).replace("_", " ").title()
+    st.caption(f"Inference status: {status_text}")
 
-    # Header with Case ID and Status
-    col_res_title, col_res_status = st.columns([3, 1])
-    with col_res_title:
-        st.subheader(f"Inference Report: {resp.get('case_id', 'AUR-CASE')}")
-    with col_res_status:
-        st.markdown(
-            f"<div style='text-align: right; padding-top: 8px;'>Status: <strong>{resp.get('status', 'completed').upper()}</strong></div>",
-            unsafe_allow_html=True,
-        )
+    render_metrics_panel(response.get("token_usage"))
 
-    # Section B: Compact Metrics Cards
-    render_metrics_panel(resp.get("token_usage"))
+    submitted_payload = st.session_state.last_payload or {}
+    profile = submitted_payload.get("business_profile")
+    render_results_panel(
+        response,
+        business_profile=profile if isinstance(profile, dict) else None,
+    )
 
-    # Section C: 5 Standardized Verification Sections
-    render_results_panel(resp)
-
-    # Export & Download Options
-    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-    col_d1, col_d2, col_d3 = st.columns([1.5, 1.5, 3])
-    
-    report_text = resp.get("report", "")
-    case_id_clean = resp.get("case_id", "AUR-CASE").replace(" ", "_")
-
-    with col_d1:
+    case_id = str(response.get("case_id", "auroraa-case")).replace(" ", "_")
+    report = response.get("report", "")
+    download_columns = st.columns(2)
+    with download_columns[0]:
         st.download_button(
-            label="📥 Download Report (.TXT)",
-            data=report_text,
-            file_name=f"{case_id_clean}_reasoning_report.txt",
-            mime="text/plain",
-            use_container_width=True,
-        )
-    with col_d2:
-        st.download_button(
-            label="📥 Download JSON Response",
-            data=json.dumps(resp, indent=2),
-            file_name=f"{case_id_clean}_inference_result.json",
+            "Download inference response",
+            data=json.dumps(response, ensure_ascii=False, indent=2),
+            file_name=f"{case_id}_inference_response.json",
             mime="application/json",
-            use_container_width=True,
+            icon=":material/download:",
+        )
+    with download_columns[1]:
+        st.download_button(
+            "Download Markdown report",
+            data=report if isinstance(report, str) else "",
+            file_name=f"{case_id}_reasoning_report.md",
+            mime="text/markdown",
+            icon=":material/description:",
         )
 
-    # Expandable Raw JSON Viewer
-    with st.expander("🔍 View Raw API JSON Response", expanded=False):
-        st.json(resp)
+    with st.expander("View full Markdown report"):
+        if isinstance(report, str) and report.strip():
+            st.markdown(report)
+        else:
+            st.caption("No Markdown report was returned.")
+
+    with st.expander("View raw inference response"):
+        st.json(response)

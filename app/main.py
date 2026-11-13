@@ -9,3 +9,4 @@ app = FastAPI(
 
 app.include_router(router)
 
+# streamlit run ui/app.py

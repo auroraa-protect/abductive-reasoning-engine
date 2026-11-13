@@ -3,7 +3,7 @@ Unit tests for Auroraa R&D Streamlit UI components, sample data, and API client.
 """
 
 import json
-import pytest
+from types import SimpleNamespace
 from app.schemas.request_schemas import ExplainRequest
 from ui.sample_data import (
     ABC_TEXTILE_DATA,
@@ -14,9 +14,9 @@ from ui.sample_data import (
 )
 from ui.api_client import normalize_url, check_health, run_inference
 from ui.components import (
-    get_status_badge_html,
-    parse_evidence_items,
-    parse_abductive_hypotheses,
+    clean_report_markdown,
+    extract_file_content,
+    status_badge_markdown,
 )
 
 
@@ -61,57 +61,34 @@ def test_api_client_offline_handling():
     assert "Connection failed" in res["error"] or "Unable to connect" in res["error"]
 
 
-def test_status_badge_rendering():
-    """Verify badge HTML styling conforms to color specification."""
-    b_match = get_status_badge_html("MATCH")
-    assert "badge-match" in b_match
-
-    b_part = get_status_badge_html("PARTIAL MATCH")
-    assert "badge-partial" in b_part
-
-    b_mis = get_status_badge_html("MISMATCH")
-    assert "badge-mismatch" in b_mis
-
-    b_ins = get_status_badge_html("INSUFFICIENT EVIDENCE")
-    assert "badge-insufficient" in b_ins
+def test_status_badges_use_only_known_assessments():
+    assert status_badge_markdown("MATCH") == ":green-badge[MATCH]"
+    assert status_badge_markdown("PARTIAL MATCH") == ":orange-badge[PARTIAL MATCH]"
+    assert status_badge_markdown("MISMATCH") == ":red-badge[MISMATCH]"
+    assert status_badge_markdown("INSUFFICIENT EVIDENCE") == ":gray-badge[INSUFFICIENT EVIDENCE]"
+    assert status_badge_markdown("unexpected") == ":gray-badge[Assessment not provided]"
 
 
-def test_evidence_matching_parser():
-    """Verify parser extracts categories and statuses correctly."""
-    sample_text = """
-    - Category: Purchases & Consumption
-      Status: MISMATCH
-      Supporting Evidence: Invoice PUR-001 (1,000 kg cotton) vs production consumption (1,600 kg cotton).
-      Observation: Recorded consumption exceeds purchases by 600 kg.
-      Explanation: The business consumed more raw cotton than accounted for in current period invoices.
-
-    - Category: Production & Capacity
-      Status: MATCH
-      Supporting Evidence: Production log of 8,000 meters matches declared production.
-      Observation: Capacity utilization is 80%.
-      Explanation: Operations align with infrastructure capacity.
-    """
-    items = parse_evidence_items(sample_text)
-    assert len(items) == 2
-    assert items[0]["category"] == "Purchases & Consumption"
-    assert items[0]["status"] == "MISMATCH"
-    assert "600 kg" in items[0]["observation"]
-
-    assert items[1]["category"] == "Production & Capacity"
-    assert items[1]["status"] == "MATCH"
+def test_report_markdown_removes_orphan_bold_markers_only():
+    report = "**\n\n**Verified** operations.\n\n**"
+    assert clean_report_markdown(report) == "**Verified** operations."
 
 
-def test_abductive_hypotheses_parser():
-    """Verify parser extracts hypotheses and supporting/missing info."""
-    sample_text = """
-    Hypothesis 1: The additional 600 kg cotton was sourced from unrecorded opening warehouse inventory.
-    Supporting: 20 storage bags observed in warehouse image IMG-001.
-    Contradicting: No opening inventory recorded in purchase bills.
-    Missing: Opening inventory stock register.
-    Plausibility: High plausibility due to physical visual evidence.
-    """
-    hypotheses = parse_abductive_hypotheses(sample_text)
-    assert len(hypotheses) == 1
-    assert "600 kg" in hypotheses[0]["title"]
-    assert "20 storage bags" in hypotheses[0]["supporting"]
-    assert "Opening inventory stock register" in hypotheses[0]["missing"]
+def test_media_uploads_do_not_create_unverified_observations():
+    """Raw media is not analyzed by the API client and must not become fake evidence."""
+    for filename in ("inspection.jpg", "premises.mp4"):
+        text, parsed_json, file_type = extract_file_content(
+            SimpleNamespace(name=filename, getvalue=lambda: b"media-bytes")
+        )
+        assert text is None
+        assert parsed_json is None
+        assert "not analyzed" in file_type
+
+
+def test_json_file_upload_requires_an_object_payload():
+    text, parsed_json, file_type = extract_file_content(
+        SimpleNamespace(name="case.json", getvalue=lambda: b"[]")
+    )
+    assert text is None
+    assert parsed_json is None
+    assert file_type == "Invalid JSON: the payload must be an object"
