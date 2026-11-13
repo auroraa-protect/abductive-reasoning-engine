@@ -123,11 +123,16 @@ Service health check:
 
 4. **Run Server**:
    ```bash
-   uvicorn app.main:app --reload
+   uvicorn app.main:app --port 8000
    ```
 
-5. **Run Benchmark & Tests**:
+5. **Run Streamlit R&D Testing UI**:
+   ```bash
+   streamlit run ui/app.py
+   ```
+
+6. **Run Benchmark & Tests**:
    ```bash
    python scripts/benchmark_evaluation.py
-   python -m pytest tests/test_reasoning_engine.py
+   python -m pytest tests/
    ```

@@ -30,3 +30,8 @@ uvicorn==0.35.0
 watchfiles==1.2.0
 websockets==17.0.1
 win32_setctime==1.2.0
+streamlit>=1.30.0
+httpx>=0.28.0
+requests>=2.31.0
+pypdf>=5.0.0
+python-docx>=1.1.0
