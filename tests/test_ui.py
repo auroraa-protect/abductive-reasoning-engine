@@ -4,6 +4,8 @@ Unit tests for Auroraa R&D Streamlit UI components, sample data, and API client.
 
 import json
 from types import SimpleNamespace
+from streamlit.testing.v1 import AppTest
+
 from app.schemas.request_schemas import ExplainRequest
 from ui.sample_data import (
     ABC_TEXTILE_DATA,
@@ -16,7 +18,7 @@ from ui.api_client import normalize_url, check_health, run_inference
 from ui.components import (
     clean_report_markdown,
     extract_file_content,
-    status_badge_markdown,
+    render_report_markdown,
 )
 
 
@@ -61,17 +63,24 @@ def test_api_client_offline_handling():
     assert "Connection failed" in res["error"] or "Unable to connect" in res["error"]
 
 
-def test_status_badges_use_only_known_assessments():
-    assert status_badge_markdown("MATCH") == ":green-badge[MATCH]"
-    assert status_badge_markdown("PARTIAL MATCH") == ":orange-badge[PARTIAL MATCH]"
-    assert status_badge_markdown("MISMATCH") == ":red-badge[MISMATCH]"
-    assert status_badge_markdown("INSUFFICIENT EVIDENCE") == ":gray-badge[INSUFFICIENT EVIDENCE]"
-    assert status_badge_markdown("unexpected") == ":gray-badge[Assessment not provided]"
-
-
 def test_report_markdown_removes_orphan_bold_markers_only():
     report = "**\n\n**Verified** operations.\n\n**"
     assert clean_report_markdown(report) == "**Verified** operations."
+
+
+def test_full_report_is_rendered_as_markdown():
+    report = (
+        "## Evidence matching\n\n"
+        "| Category | Status |\n"
+        "| --- | --- |\n"
+        "| Purchases | MISMATCH |"
+    )
+    app = AppTest.from_string(
+        "from ui.components import render_report_markdown\n"
+        f"render_report_markdown({report!r})"
+    ).run()
+    assert not app.exception
+    assert app.markdown[0].value == report
 
 
 def test_media_uploads_do_not_create_unverified_observations():

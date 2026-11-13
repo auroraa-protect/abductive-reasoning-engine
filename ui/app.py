@@ -2,25 +2,31 @@
 
 import json
 import os
+import sys
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import streamlit as st
 
-if __package__:
-    from .api_client import (
+# Ensure both repository root and ui directory are present in sys.path
+_ROOT = Path(__file__).resolve().parent.parent
+_UI_DIR = Path(__file__).resolve().parent
+
+for _p in (str(_ROOT), str(_UI_DIR)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+try:
+    from ui.api_client import (
         DEFAULT_BACKEND_URL,
         check_health,
         get_metrics,
         normalize_url,
         run_inference,
     )
-    from .components import (
-        extract_file_content,
-        render_metrics_panel,
-        render_results_panel,
-    )
-    from .sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
-else:
+    from ui.components import extract_file_content, render_report_markdown
+    from ui.sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
+except ImportError:
     from api_client import (
         DEFAULT_BACKEND_URL,
         check_health,
@@ -28,11 +34,7 @@ else:
         normalize_url,
         run_inference,
     )
-    from components import (
-        extract_file_content,
-        render_metrics_panel,
-        render_results_panel,
-    )
+    from components import extract_file_content, render_report_markdown
     from sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
 
 
@@ -43,10 +45,77 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# High-contrast CSS to guarantee crisp typography and correct colors
+st.markdown(
+    """
+    <style>
+    /* Workspace typography */
+    .stApp {
+        background-color: #f8fafc;
+    }
+    
+    /* Ensure all headings in the main workspace are crisp and high-contrast */
+    .main h1, .main h2, .main h3, .main h4, .main h5, .main h6,
+    [data-testid="stHeadingWithActionElements"] h1,
+    [data-testid="stHeadingWithActionElements"] h2,
+    [data-testid="stHeadingWithActionElements"] h3 {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        opacity: 1 !important;
+    }
+    
+    .main p, .main span, .main li, .main [data-testid="stMarkdownContainer"] p {
+        color: #1e293b !important;
+        opacity: 1 !important;
+    }
+    
+    .main label, .main [data-testid="stWidgetLabel"] p {
+        color: #334155 !important;
+        font-weight: 600 !important;
+    }
+
+    /* Text areas and inputs */
+    .main textarea, .main input {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+
+    /* Dark Navy Sidebar */
+    section[data-testid="stSidebar"] {
+        background-color: #0b1329 !important;
+    }
+
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] label {
+        color: #f1f5f9 !important;
+    }
+
+    section[data-testid="stSidebar"] hr {
+        border-color: #1e293b !important;
+    }
+
+    /* Segmented Control */
+    div[data-testid="stSegmentedControl"] button p {
+        color: #334155 !important;
+        font-weight: 500 !important;
+    }
+    div[data-testid="stSegmentedControl"] button[aria-checked="true"] p {
+        color: #1e40af !important;
+        font-weight: 700 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 def _start_new_test() -> None:
     st.session_state.last_response = None
-    st.session_state.last_payload = None
     st.session_state.last_error = None
     st.session_state.json_input = ""
     st.session_state.input_mode = "JSON input"
@@ -92,7 +161,6 @@ def _backend_health(base_url: str) -> Dict[str, Any]:
 st.session_state.setdefault("json_input", ABC_TEXTILE_JSON)
 st.session_state.setdefault("input_mode", "JSON input")
 st.session_state.setdefault("last_response", None)
-st.session_state.setdefault("last_payload", None)
 st.session_state.setdefault("last_error", None)
 st.session_state.setdefault("text_case_id", "AUR-CASE-001")
 st.session_state.setdefault(
@@ -401,7 +469,6 @@ if run_clicked:
         if success:
             if isinstance(result, dict):
                 st.session_state.last_response = result
-                st.session_state.last_payload = payload
                 st.session_state.last_error = None
                 st.toast("Inference completed.")
             else:
@@ -422,17 +489,11 @@ if st.session_state.last_response:
     status_text = str(response.get("status", "completed")).replace("_", " ").title()
     st.caption(f"Inference status: {status_text}")
 
-    render_metrics_panel(response.get("token_usage"))
-
-    submitted_payload = st.session_state.last_payload or {}
-    profile = submitted_payload.get("business_profile")
-    render_results_panel(
-        response,
-        business_profile=profile if isinstance(profile, dict) else None,
-    )
+    report = response.get("report", "")
+    if not render_report_markdown(report):
+        st.warning("The inference response did not contain a Markdown report.")
 
     case_id = str(response.get("case_id", "auroraa-case")).replace(" ", "_")
-    report = response.get("report", "")
     download_columns = st.columns(2)
     with download_columns[0]:
         st.download_button(
@@ -450,12 +511,6 @@ if st.session_state.last_response:
             mime="text/markdown",
             icon=":material/description:",
         )
-
-    with st.expander("View full Markdown report"):
-        if isinstance(report, str) and report.strip():
-            st.markdown(report)
-        else:
-            st.caption("No Markdown report was returned.")
 
     with st.expander("View raw inference response"):
         st.json(response)

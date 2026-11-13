@@ -6,6 +6,12 @@ from typing import Any, Dict, Optional, Tuple
 
 import streamlit as st
 
+__all__ = [
+    "clean_report_markdown",
+    "render_report_markdown",
+    "extract_file_content",
+]
+
 
 def clean_report_markdown(markdown: str) -> str:
     """Drop orphan bold markers while preserving valid Markdown formatting."""
@@ -14,156 +20,15 @@ def clean_report_markdown(markdown: str) -> str:
     ).strip()
 
 
-def status_badge_markdown(status: Optional[str]) -> str:
-    """Return a colored badge for known API assessment values."""
-    badges = {
-        "MATCH": ":green-badge[MATCH]",
-        "PARTIAL MATCH": ":orange-badge[PARTIAL MATCH]",
-        "MISMATCH": ":red-badge[MISMATCH]",
-        "INSUFFICIENT EVIDENCE": ":gray-badge[INSUFFICIENT EVIDENCE]",
-    }
-    if not status:
-        return ":gray-badge[Assessment not provided]"
-    return badges.get(status.strip().upper(), ":gray-badge[Assessment not provided]")
-
-
-def render_metrics_panel(token_usage: Optional[Dict[str, Any]]) -> None:
-    """Render only the token and latency metrics returned by the API."""
-    if not token_usage:
-        return
-
-    if hasattr(token_usage, "model_dump"):
-        usage = token_usage.model_dump()
-    elif isinstance(token_usage, dict):
-        usage = token_usage
-    else:
-        usage = {}
-
-    def format_count(value: Any) -> str:
-        if value is None:
-            return "—"
-        if isinstance(value, (int, float)):
-            return f"{value:,}"
-        return str(value)
-
-    latency_ms = usage.get("latency_ms")
-    try:
-        latency = f"{float(latency_ms) / 1000:.2f} s" if latency_ms is not None else "—"
-    except (TypeError, ValueError):
-        latency = "—"
-
-    metrics = [
-        ("Model", usage.get("model") or "—"),
-        ("Total tokens", format_count(usage.get("total_tokens"))),
-        ("Latency", latency),
-        ("Inference calls", format_count(usage.get("inference_calls"))),
-    ]
-    for column, (label, value) in zip(st.columns(4), metrics):
-        with column:
-            with st.container(border=True):
-                st.metric(label, value)
-
-    st.caption("Token breakdown")
-    token_metrics = [
-        ("Input tokens", usage.get("input_tokens")),
-        ("Output tokens", usage.get("output_tokens")),
-    ]
-    for column, (label, value) in zip(st.columns(2), token_metrics):
-        with column:
-            with st.container(border=True):
-                st.metric(label, format_count(value))
-
-
-def render_results_panel(
-    response: Dict[str, Any],
-    business_profile: Optional[Dict[str, Any]] = None,
-) -> None:
-    """Render API-provided sections as Markdown without inferring report data."""
-    if not response:
-        return
-
-    sections = response.get("sections")
-    if not isinstance(sections, dict):
-        sections = {}
-
-    section_titles = [
-        ("BUSINESS UNDERSTANDING", "Business understanding"),
-        ("EVIDENCE MATCHING", "Evidence matching"),
-        ("POSSIBLE EXPLANATIONS", "Abductive reasoning"),
-        ("ADDITIONAL INFORMATION REQUIRED", "Additional information required"),
-    ]
-    known_keys = {key for key, _ in section_titles}
-    known_keys.add("OVERALL ASSESSMENT")
-
-    business_text = sections.get("BUSINESS UNDERSTANDING")
-    if (isinstance(business_text, str) and business_text.strip()) or business_profile:
-        with st.container(border=True):
-            st.subheader("Business understanding")
-            if business_profile:
-                _render_business_profile(business_profile)
-            if isinstance(business_text, str) and business_text.strip():
-                st.markdown(clean_report_markdown(business_text))
-
-    for key, title in section_titles[1:]:
-        content = sections.get(key)
-        if isinstance(content, str) and content.strip():
-            with st.container(border=True):
-                st.subheader(title)
-                st.markdown(clean_report_markdown(content))
-
-    for key, content in sections.items():
-        if key not in known_keys and isinstance(content, str) and content.strip():
-            with st.container(border=True):
-                st.subheader(str(key))
-                st.markdown(clean_report_markdown(content))
-
-    report = response.get("report")
-    if not sections and isinstance(report, str) and report.strip():
-        with st.container(border=True):
-            st.subheader("Inference report")
-            st.markdown(clean_report_markdown(report))
-
-    with st.container(border=True):
-        st.subheader("Overall assessment")
-        st.markdown(status_badge_markdown(response.get("overall_assessment")))
-        assessment_text = sections.get("OVERALL ASSESSMENT")
-        if isinstance(assessment_text, str) and assessment_text.strip():
-            st.markdown(clean_report_markdown(assessment_text))
-
-
-def _render_business_profile(profile: Dict[str, Any]) -> None:
-    """Show declared business attributes present in the submitted payload."""
-    fields = [
-        ("Business name", "business_name"),
-        ("Industry", "industry"),
-        ("Business activity", "business_activity"),
-        ("Business age", "business_age_years"),
-        ("Employees", "number_of_employees"),
-        ("Declared turnover", "declared_monthly_turnover"),
-        ("Monthly production", "declared_monthly_production"),
-        ("Production capacity", "declared_production_capacity"),
-    ]
-    displayed_fields = []
-    for label, key in fields:
-        value = profile.get(key)
-        if value is None or value == "":
-            continue
-        if key == "declared_monthly_turnover" and isinstance(value, (int, float)):
-            display_value = f"₹{value:,.0f}"
-        elif isinstance(value, (int, float)):
-            display_value = f"{value:,}"
-        else:
-            display_value = str(value)
-        displayed_fields.append((label, display_value))
-
-    for start in range(0, len(displayed_fields), 4):
-        columns = st.columns(4)
-        for column, (label, value) in zip(
-            columns, displayed_fields[start : start + 4]
-        ):
-            with column:
-                st.caption(label)
-                st.markdown(f"**{value}**")
+def render_report_markdown(report: Any) -> bool:
+    """Render the complete API report with Streamlit's Markdown renderer."""
+    if not isinstance(report, str):
+        return False
+    content = clean_report_markdown(report)
+    if not content:
+        return False
+    st.markdown(content)
+    return True
 
 
 def extract_file_content(
