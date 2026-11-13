@@ -2,6 +2,7 @@
 
 import io
 import json
+import re
 from typing import Any, Dict, Optional, Tuple
 
 import streamlit as st
@@ -14,10 +15,23 @@ __all__ = [
 
 
 def clean_report_markdown(markdown: str) -> str:
-    """Drop orphan bold markers while preserving valid Markdown formatting."""
-    return "\n".join(
-        line for line in markdown.splitlines() if line.strip() != "**"
-    ).strip()
+    """
+    Clean the markdown report:
+    - Drop orphan bold markers ('**').
+    - Remove literal <br>, <br/>, <br /> tags:
+      - Inside Markdown tables (lines with '|'), replace with ' · ' to maintain row formatting.
+      - In regular paragraphs, replace with a clean line break.
+    """
+    lines = []
+    for line in markdown.splitlines():
+        if line.strip() == "**":
+            continue
+        if "|" in line:
+            line = re.sub(r"\s*<br\s*/?>\s*", " · ", line, flags=re.IGNORECASE)
+        else:
+            line = re.sub(r"\s*<br\s*/?>\s*", "\n", line, flags=re.IGNORECASE)
+        lines.append(line)
+    return "\n".join(lines).strip()
 
 
 def render_report_markdown(report: Any) -> bool:

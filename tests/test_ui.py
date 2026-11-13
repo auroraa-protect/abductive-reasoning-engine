@@ -68,6 +68,13 @@ def test_report_markdown_removes_orphan_bold_markers_only():
     assert clean_report_markdown(report) == "**Verified** operations."
 
 
+def test_clean_report_markdown_removes_br_tags():
+    table_sample = "| Category | Supporting Evidence |\n| Purchases | Invoice PUR-001 <br> Consumption log |"
+    cleaned = clean_report_markdown(table_sample)
+    assert "<br>" not in cleaned
+    assert "Invoice PUR-001 · Consumption log" in cleaned
+
+
 def test_full_report_is_rendered_as_markdown():
     report = (
         "## Evidence matching\n\n"
