@@ -1,92 +1,190 @@
-
-SALARY SLIP
-
 {
-  "document_type": "PAYSLIP",
-  "shap_feature": [
-    {
-      "feature": "bank_name_consistency",
-      "contribution": 0.27
-    },
-    {
-      "feature": "exif_anomaly",
-      "contribution": -0.13
-    },
-    {
-      "feature": "pan_format",
-      "contribution": -0.03
-    }
-  ],
-  "context": [
-    {
-      "feature": "bank_name_consistency",
-      "reason": "The bank name printed on the document is inconsistent with standard bank registry names."
-    }
-  ],
-  "individual_data": [
-    {
-      "field": "name",
-      "value": "Nishant Patil"
-    },
-    {
-      "field": "employee_id",
-      "value": "MUM/2022/06"
-    },
-    {
-      "field": "pan",
-      "value": "GHAPP6217H"
-    },
-    {
-      "field": "uan",
-      "value": null
-    }
-  ]
-}
+  "case_id": "AUR-CASE-001",
+  "schema_version": "1.0",
 
-BANK_STATEMENT
+  "business_profile": {
+    "business_name": "ABC Textile Industries",
+    "business_type": "manufacturing",
+    "industry": "textile",
+    "business_activity": "Cotton fabric manufacturing",
+    "business_age_years": 5,
+    "declared_monthly_turnover": 1500000,
+    "declared_monthly_production": 8000,
+    "declared_production_capacity": 10000,
+    "number_of_employees": 15
+  },
 
-{
-  "document_type": "BANK_STATEMENT",
-  "shap_feature": [
-    {
-      "feature": "running_balance_errors",
-      "contribution": 0.27
-    },
-    {
-      "feature": "exif_anomaly",
-      "contribution": -0.13
-    },
-    {
-      "feature": "bank_account_no_consistency",
-      "contribution": -0.03
+  "purchase_evidence": {
+    "bills": [
+      {
+        "bill_id": "PUR-001",
+        "supplier_name": "XYZ Cotton Traders",
+        "invoice_number": "INV-101",
+        "invoice_date": "2026-10-01",
+        "items": [
+          {
+            "item_name": "Raw Cotton",
+            "quantity": 1000,
+            "unit": "kg",
+            "unit_price": 150,
+            "total_amount": 150000
+          }
+        ],
+        "total_amount": 150000
+      }
+    ]
+  },
+
+  "inventory_evidence": {
+    "declared_inventory": [
+      {
+        "item_name": "Raw Cotton",
+        "quantity": 500,
+        "unit": "kg",
+        "estimated_value": 75000
+      },
+      {
+        "item_name": "Finished Fabric",
+        "quantity": 2000,
+        "unit": "meters",
+        "estimated_value": 300000
+      }
+    ],
+
+    "image_analysis": [
+      {
+        "evidence_id": "IMG-001",
+        "observed_objects": [
+          {
+            "object": "Cotton storage bags",
+            "estimated_count": 20,
+            "confidence": 0.91
+          },
+          {
+            "object": "Fabric rolls",
+            "estimated_count": 35,
+            "confidence": 0.94
+          }
+        ],
+        "observations": [
+          "Cotton storage bags observed",
+          "Finished fabric rolls observed",
+          "Inventory stored inside warehouse"
+        ],
+        "analysis_confidence": 0.89
+      }
+    ]
+  },
+
+  "production_evidence": {
+    "production_records": [
+      {
+        "date": "2026-10-15",
+        "product": "Cotton Fabric",
+        "quantity": 8000,
+        "unit": "meters"
+      }
+    ],
+    "raw_material_consumption": [
+      {
+        "material": "Raw Cotton",
+        "quantity": 1600,
+        "unit": "kg"
+      }
+    ],
+    "finished_goods": [
+      {
+        "product": "Cotton Fabric",
+        "quantity": 8000,
+        "unit": "meters"
+      }
+    ]
+  },
+
+  "sales_evidence": {
+    "sales_bills": [
+      {
+        "invoice_number": "SALE-001",
+        "customer_name": "ABC Garments",
+        "invoice_date": "2026-10-20",
+        "total_amount": 250000
+      }
+    ],
+    "customer_details": [
+      {
+        "customer_name": "ABC Garments",
+        "relationship": "Retailer"
+      }
+    ],
+    "sales_summary": {
+      "total_sales_value": 250000,
+      "period": "2026-10"
     }
-  ],
-  "context": [
-    {
-      "feature": "running_balance_errors",
-      "reason": "One or more transaction entries show a running balance that does not fully align with the preceding balance and transaction amount."
-    }
-  ],
-  "individual_data": [
-    {
-      "field": "account_holder_name",
-      "value": "Nishant Patil"
-    },
-    {
-      "field": "account_number",
-      "value": "XXXX1234"
-    },
-    {
-      "field": "bank_name",
-      "value": "Example Bank"
-    },
-    {
-      "field": "ifsc_code",
-      "value": "EXMP0001234"
-    },
-    {
-      "field": "statement_period",
-      "value": "2026-08-01 to 2026-08-31"
-    }
-  ]
+  },
+
+  "physical_evidence": {
+    "video_analysis": [
+      {
+        "evidence_id": "VID-001",
+        "duration_seconds": 120,
+        "observed_activities": [
+          "Workers operating textile machinery",
+          "Fabric processing activity"
+        ],
+        "observed_machinery": [
+          "Power loom",
+          "Fabric cutting machine"
+        ],
+        "observations": [
+          "Manufacturing activity visible",
+          "Multiple workers present"
+        ],
+        "analysis_confidence": 0.88
+      }
+    ],
+    "machinery_analysis": [
+      {
+        "machine_name": "Power Loom",
+        "observed_count": 5,
+        "condition": "Operational"
+      }
+    ],
+    "premises_analysis": [
+      {
+        "area": "Production floor",
+        "observation": "Manufacturing equipment and fabric rolls observed"
+      }
+    ]
+  },
+
+  "financial_evidence": {
+    "bank_transactions": [
+      {
+        "transaction_date": "2026-10-21",
+        "transaction_type": "credit",
+        "amount": 250000,
+        "description": "ABC Garments payment"
+      }
+    ],
+    "electricity_bills": [
+      {
+        "billing_month": "2026-10",
+        "units_consumed": 4500,
+        "bill_amount": 38000
+      }
+    ],
+    "gst_records": [
+      {
+        "period": "2026-10",
+        "declared_turnover": 1500000
+      }
+    ]
+  },
+
+  "additional_evidence": {
+    "documents": [],
+    "observations": [
+      "Business claims monthly production capacity of 10000 meters"
+    ]
+  }
 }

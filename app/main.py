@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from app.routes.inferance_routes import router
 
 app = FastAPI(
-    title="Fraud Explanation Engine",
+    title="Abductive Reasoning Engine",
     version="1.0.0"
 )
 

@@ -1,0 +1,43 @@
+[
+  {
+    "case_id": "AUR-CASE-001",
+    "industry": "Manufacturing",
+    "business_name": "ABC Textile Industries",
+    "description": "MSME cotton fabric manufacturer with 5 operational power looms, 15 workers, and capacity of 10,000 meters/month.",
+    "key_discrepancies_to_identify": [
+      "Physical evidence supports active textile manufacturing operations (5 power looms, fabric rolls, workers)",
+      "Raw cotton consumption (1,600 kg) exceeds documented purchases (1,000 kg)",
+      "Missing opening inventory prevents complete raw material reconciliation",
+      "Production records (8,000 meters) match declared production",
+      "Declared turnover (₹15 Lakhs) is significantly higher than documented sales (₹2.5 Lakhs)",
+      "Bank transactions (₹2.5 Lakhs) support recorded sales invoice",
+      "Electricity consumption (4,500 units) requires operational context"
+    ],
+    "sample_payload_file": "app/model/request_example.txt"
+  },
+  {
+    "case_id": "AUR-CASE-002",
+    "industry": "Trading",
+    "business_name": "Sunrise Electronics Trading",
+    "description": "Wholesale distributor of mobile phone accessories and peripherals selling to regional retail electronics stores.",
+    "key_discrepancies_to_identify": [
+      "Purchase invoices establish procurement of 2,000 earbuds and 5,000 fast chargers totaling ₹22 Lakhs",
+      "Sales invoices document distribution of ₹27 Lakhs to retail chains",
+      "Bank statements reflect incoming credits of ₹27 Lakhs matching sales collections",
+      "Declared monthly turnover of ₹30 Lakhs vs documented sales of ₹27 Lakhs shows 90% coverage",
+      "Physical warehouse inspection confirms packaged stock matching product lines"
+    ]
+  },
+  {
+    "case_id": "AUR-CASE-003",
+    "industry": "Services",
+    "business_name": "Apex Software Consulting",
+    "description": "IT services and staffing company offering custom enterprise software engineering and cloud consulting.",
+    "key_discrepancies_to_identify": [
+      "Declared monthly revenue of ₹10 Lakhs supported by two recurring client contracts (₹9.1 Lakhs)",
+      "Bank credit reconciliation matches customer retainer billing",
+      "Payroll records for 8 software engineers match physical office occupancy",
+      "Low capital equipment requirement aligns with software consulting service delivery"
+    ]
+  }
+]
