@@ -86,14 +86,55 @@ st.markdown(
         background-color: #0b1329 !important;
     }
 
-    section[data-testid="stSidebar"] h1,
-    section[data-testid="stSidebar"] h2,
-    section[data-testid="stSidebar"] h3,
-    section[data-testid="stSidebar"] p,
-    section[data-testid="stSidebar"] span,
-    section[data-testid="stSidebar"] label {
-        color: #f1f5f9 !important;
-    }
+    /* =================================
+   AURORAA SIDEBAR TEXT VISIBILITY
+================================= */
+
+/* Main sidebar title */
+section[data-testid="stSidebar"] h1 {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+/* Section headings: Sample cases, Backend */
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    color: #f8fafc !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+/* Descriptions and markdown text */
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+}
+
+/* Captions and supporting descriptions */
+section[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+}
+
+/* Input labels */
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
+    color: #f1f5f9 !important;
+    opacity: 1 !important;
+}
+
+/* Status and informational text */
+section[data-testid="stSidebar"] .stMarkdown {
+    color: #cbd5e1 !important;
+}
+
+/* Sidebar divider */
+section[data-testid="stSidebar"] hr {
+    border-color: #334155 !important;
+}
 
     section[data-testid="stSidebar"] hr {
         border-color: #1e293b !important;
