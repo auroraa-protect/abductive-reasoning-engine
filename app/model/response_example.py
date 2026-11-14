@@ -61,7 +61,6 @@
       "description": "Recorded raw material consumption exceeds the quantity documented in the supplied purchase invoice.",
       "evidence": [
         {
-          "evidence_id": "PUR-001",
           "source_type": "purchase_invoice",
           "description": "Purchase of 1000 kg cotton"
         }
@@ -74,7 +73,6 @@
       "description": "Textile machinery and manufacturing activity were identified in the submitted video.",
       "evidence": [
         {
-          "evidence_id": "VID-001",
           "source_type": "video_analysis",
           "description": "Power loom and fabric processing activity"
         }
@@ -89,7 +87,6 @@
       "explanation": "The business may have used raw cotton available in opening inventory to support the recorded production.",
       "supporting_evidence": [
         {
-          "evidence_id": "PUR-001",
           "source_type": "purchase_invoice",
           "description": "Documented cotton procurement"
         }

@@ -10,13 +10,10 @@
     "declared_production_capacity": 10000,
     "number_of_employees": 15
   },
-
   "purchase_evidence": {
     "bills": [
       {
-        "bill_id": "PUR-001",
         "supplier_name": "XYZ Cotton Traders",
-        "invoice_number": "INV-101",
         "invoice_date": "2026-10-01",
         "items": [
           {
@@ -31,7 +28,6 @@
       }
     ]
   },
-
   "inventory_evidence": {
     "declared_inventory": [
       {
@@ -47,10 +43,8 @@
         "estimated_value": 300000
       }
     ],
-
     "image_analysis": [
       {
-        "evidence_id": "IMG-001",
         "observed_objects": [
           {
             "object": "Cotton storage bags",
@@ -72,7 +66,6 @@
       }
     ]
   },
-
   "production_evidence": {
     "production_records": [
       {
@@ -97,11 +90,9 @@
       }
     ]
   },
-
   "sales_evidence": {
     "sales_bills": [
       {
-        "invoice_number": "SALE-001",
         "customer_name": "ABC Garments",
         "invoice_date": "2026-10-20",
         "total_amount": 250000
@@ -118,11 +109,9 @@
       "period": "2026-10"
     }
   },
-
   "physical_evidence": {
     "video_analysis": [
       {
-        "evidence_id": "VID-001",
         "duration_seconds": 120,
         "observed_activities": [
           "Workers operating textile machinery",
@@ -153,7 +142,6 @@
       }
     ]
   },
-
   "financial_evidence": {
     "bank_transactions": [
       {
@@ -177,7 +165,6 @@
       }
     ]
   },
-
   "additional_evidence": {
     "documents": [],
     "observations": [

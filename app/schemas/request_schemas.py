@@ -29,9 +29,7 @@ class PurchaseItem(BaseModel):
 class PurchaseBill(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    bill_id: Optional[str] = None
     supplier_name: Optional[str] = None
-    invoice_number: Optional[str] = None
     invoice_date: Optional[str] = None
     items: List[PurchaseItem] = Field(default_factory=list)
     total_amount: Optional[float] = None
@@ -63,7 +61,6 @@ class ImageObservation(BaseModel):
 class InventoryImageAnalysis(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    evidence_id: Optional[str] = None
     observed_objects: List[ImageObservation] = Field(default_factory=list)
     observations: List[str] = Field(default_factory=list)
     analysis_confidence: Optional[float] = None
@@ -95,7 +92,6 @@ class SalesEvidence(BaseModel):
 class VideoAnalysis(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    evidence_id: Optional[str] = None
     duration_seconds: Optional[float] = None
     observed_activities: List[str] = Field(default_factory=list)
     observed_machinery: List[str] = Field(default_factory=list)

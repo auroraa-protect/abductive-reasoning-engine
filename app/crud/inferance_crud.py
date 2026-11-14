@@ -182,7 +182,7 @@ def build_user_payload(req: ExplainRequest) -> str:
     if req.purchase_evidence and req.purchase_evidence.bills:
         for b in req.purchase_evidence.bills:
             items_str = ", ".join(f"{it.quantity:,.0f} {it.unit} of {it.item_name} @ ₹{it.unit_price or 0}/unit" for it in b.items)
-            obs_lines.append(f"Purchase Bill [{b.bill_id or 'PUR'}]: From {b.supplier_name or 'Supplier'} on {b.invoice_date or 'N/A'} ({items_str}, Total: ₹{b.total_amount or 0:,.0f})")
+            obs_lines.append(f"Purchase Bill: From {b.supplier_name or 'Supplier'} on {b.invoice_date or 'N/A'} ({items_str}, Total: ₹{b.total_amount or 0:,.0f})")
 
     if req.inventory_evidence:
         if req.inventory_evidence.declared_inventory:
@@ -191,7 +191,7 @@ def build_user_payload(req: ExplainRequest) -> str:
         if req.inventory_evidence.image_analysis:
             for img in req.inventory_evidence.image_analysis:
                 objs = ", ".join(f"{o.estimated_count or 0} {o.object}" for o in img.observed_objects)
-                obs_lines.append(f"Inventory Visual Evidence [{img.evidence_id or 'IMG'}]: Observed {objs}. Notes: {'; '.join(img.observations)}")
+                obs_lines.append(f"Inventory Visual Evidence: Observed {objs}. Notes: {'; '.join(img.observations)}")
 
     if req.production_evidence:
         pe = req.production_evidence
@@ -203,14 +203,14 @@ def build_user_payload(req: ExplainRequest) -> str:
     if req.sales_evidence:
         se = req.sales_evidence
         for sb in se.sales_bills:
-            obs_lines.append(f"Sales Invoice [{sb.get('invoice_number', 'SALE')}]: To {sb.get('customer_name', 'Customer')} on {sb.get('invoice_date', 'N/A')} for ₹{sb.get('total_amount', 0):,.0f}")
+            obs_lines.append(f"Sales Invoice: To {sb.get('customer_name', 'Customer')} on {sb.get('invoice_date', 'N/A')} for ₹{sb.get('total_amount', 0):,.0f}")
         if se.sales_summary:
             obs_lines.append(f"Sales Summary: Total ₹{se.sales_summary.get('total_sales_value', 0):,.0f} for period {se.sales_summary.get('period', 'N/A')}")
 
     if req.physical_evidence:
         phy = req.physical_evidence
         for v in phy.video_analysis:
-            obs_lines.append(f"Video Inspection [{v.evidence_id or 'VID'}]: {v.duration_seconds or 0}s duration. Observed: {', '.join(v.observed_activities)}. Machinery: {', '.join(v.observed_machinery)}")
+            obs_lines.append(f"Video Inspection: {v.duration_seconds or 0}s duration. Observed: {', '.join(v.observed_activities)}. Machinery: {', '.join(v.observed_machinery)}")
         for m in phy.machinery_analysis:
             obs_lines.append(f"Machinery Analysis: {m.get('observed_count', 1)} {m.get('machine_name', '')} in condition '{m.get('condition', '')}'")
 

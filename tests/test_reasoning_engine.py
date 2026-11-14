@@ -94,7 +94,6 @@ def test_trading_industry_case():
         purchase_evidence=PurchaseEvidence(
             bills=[
                 PurchaseBill(
-                    bill_id="PUR-201",
                     supplier_name="Global Tech Imports",
                     items=[
                         PurchaseItem(item_name="Wireless Earbuds", quantity=2000, unit="pcs", unit_price=600, total_amount=1200000),
@@ -106,8 +105,8 @@ def test_trading_industry_case():
         ),
         sales_evidence=SalesEvidence(
             sales_bills=[
-                {"invoice_number": "SEL-101", "customer_name": "Retail Hub Delhi", "total_amount": 1500000},
-                {"invoice_number": "SEL-102", "customer_name": "Metro Gadgets", "total_amount": 1200000},
+                {"customer_name": "Retail Hub Delhi", "total_amount": 1500000},
+                {"customer_name": "Metro Gadgets", "total_amount": 1200000},
             ]
         ),
         financial_evidence=FinancialEvidence(

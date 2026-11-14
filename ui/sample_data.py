@@ -21,9 +21,7 @@ ABC_TEXTILE_DATA: Dict[str, Any] = {
     "purchase_evidence": {
         "bills": [
             {
-                "bill_id": "PUR-001",
                 "supplier_name": "XYZ Cotton Traders",
-                "invoice_number": "INV-101",
                 "invoice_date": "2026-10-01",
                 "items": [
                     {
@@ -55,7 +53,6 @@ ABC_TEXTILE_DATA: Dict[str, Any] = {
         ],
         "image_analysis": [
             {
-                "evidence_id": "IMG-001",
                 "observed_objects": [
                     {
                         "object": "Cotton storage bags",
@@ -100,7 +97,6 @@ ABC_TEXTILE_DATA: Dict[str, Any] = {
     "sales_evidence": {
         "sales_bills": [
             {
-                "invoice_number": "SALE-001",
                 "customer_name": "ABC Garments",
                 "invoice_date": "2026-10-20",
                 "total_amount": 250000,
@@ -114,7 +110,6 @@ ABC_TEXTILE_DATA: Dict[str, Any] = {
     "physical_evidence": {
         "video_analysis": [
             {
-                "evidence_id": "VID-001",
                 "duration_seconds": 120,
                 "observed_activities": [
                     "Workers operating textile machinery",
@@ -181,9 +176,7 @@ SUNRISE_TRADING_DATA: Dict[str, Any] = {
     "purchase_evidence": {
         "bills": [
             {
-                "bill_id": "PUR-201",
                 "supplier_name": "Global Tech Imports",
-                "invoice_number": "GTI-904",
                 "invoice_date": "2026-10-05",
                 "items": [
                     {
@@ -208,13 +201,11 @@ SUNRISE_TRADING_DATA: Dict[str, Any] = {
     "sales_evidence": {
         "sales_bills": [
             {
-                "invoice_number": "SEL-101",
                 "customer_name": "Retail Hub Delhi",
                 "invoice_date": "2026-10-18",
                 "total_amount": 1500000,
             },
             {
-                "invoice_number": "SEL-102",
                 "customer_name": "Metro Gadgets",
                 "invoice_date": "2026-10-24",
                 "total_amount": 1200000,
@@ -262,13 +253,11 @@ APEX_SERVICES_DATA: Dict[str, Any] = {
     "sales_evidence": {
         "sales_bills": [
             {
-                "invoice_number": "INV-2026-081",
                 "customer_name": "FinCorp Inc",
                 "invoice_date": "2026-10-01",
                 "total_amount": 660000,
             },
             {
-                "invoice_number": "INV-2026-082",
                 "customer_name": "HealthCare Solutions Ltd",
                 "invoice_date": "2026-10-02",
                 "total_amount": 250000,

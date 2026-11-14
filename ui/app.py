@@ -38,6 +38,108 @@ except ImportError:
     from sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
 
 
+TEXT_EVIDENCE_SECTIONS = {
+    "Purchase evidence": [
+        ("Bills", "text_purchase_bills"),
+        ("Purchased items", "text_purchase_items"),
+    ],
+    "Inventory evidence": [
+        ("Declared inventory", "text_inventory_declared"),
+        ("Image analysis", "text_inventory_images"),
+    ],
+    "Production evidence": [
+        ("Production records", "text_production_records"),
+        ("Raw material consumption", "text_production_consumption"),
+        ("Finished goods", "text_production_finished_goods"),
+    ],
+    "Sales evidence": [
+        ("Sales bills", "text_sales_bills"),
+        ("Customer details", "text_sales_customers"),
+        ("Sales summary", "text_sales_summary"),
+    ],
+    "Physical evidence": [
+        ("Video analysis", "text_physical_video"),
+        ("Machinery analysis", "text_physical_machinery"),
+        ("Premises analysis", "text_physical_premises"),
+    ],
+    "Financial evidence": [
+        ("Bank transactions", "text_financial_bank"),
+        ("Electricity bills", "text_financial_electricity"),
+        ("GST records", "text_financial_gst"),
+    ],
+    "Additional evidence": [
+        ("Documents", "text_additional_documents"),
+        ("Observations", "text_additional_observations"),
+    ],
+}
+
+TEXT_INPUT_DEFAULTS = {
+    "text_business_details": (
+        "Business name: ABC Textile Industries\n"
+        "Business type: manufacturing\n"
+        "Industry: textile\n"
+        "Business activity: Cotton fabric manufacturing\n"
+        "Business age: 5 years\n"
+        "Employees: 15"
+    ),
+    "text_business_claims": (
+        "Declared monthly turnover: INR 1,500,000\n"
+        "Declared monthly production: 8,000 meters\n"
+        "Declared production capacity: 10,000 meters/month"
+    ),
+    "text_business_context": "",
+    "text_purchase_bills": (
+        "Bill ID: PUR-001; Supplier: XYZ Cotton Traders; "
+        "Invoice: INV-101; Date: 2026-10-01; Total: INR 150,000"
+    ),
+    "text_purchase_items": (
+        "Raw Cotton: 1,000 kg at INR 150/kg; total INR 150,000"
+    ),
+    "text_inventory_declared": (
+        "Raw Cotton: 500 kg, estimated value INR 75,000\n"
+        "Finished Fabric: 2,000 meters, estimated value INR 300,000"
+    ),
+    "text_inventory_images": (
+        "IMG-001: 20 cotton storage bags (confidence 0.91); "
+        "35 fabric rolls (confidence 0.94). "
+        "Stored inside the warehouse; analysis confidence 0.89."
+    ),
+    "text_production_records": (
+        "2026-10-15: Cotton Fabric, 8,000 meters"
+    ),
+    "text_production_consumption": "Raw Cotton: 1,600 kg",
+    "text_production_finished_goods": "Cotton Fabric: 8,000 meters",
+    "text_sales_bills": (
+        "SALE-001; Customer: ABC Garments; Date: 2026-10-20; "
+        "Total: INR 250,000"
+    ),
+    "text_sales_customers": "ABC Garments: Retailer",
+    "text_sales_summary": "October 2026 total sales: INR 250,000",
+    "text_physical_video": (
+        "VID-001; 120 seconds; Workers operating textile machinery; "
+        "Power loom and fabric cutting machine; "
+        "Manufacturing activity visible; confidence 0.88"
+    ),
+    "text_physical_machinery": "Power Loom: 5 units, operational",
+    "text_physical_premises": (
+        "Production floor: Manufacturing equipment and fabric rolls observed"
+    ),
+    "text_financial_bank": (
+        "2026-10-21; credit INR 250,000; ABC Garments payment"
+    ),
+    "text_financial_electricity": (
+        "October 2026: 4,500 units consumed; bill INR 38,000"
+    ),
+    "text_financial_gst": (
+        "October 2026 declared turnover: INR 1,500,000"
+    ),
+    "text_additional_documents": "",
+    "text_additional_observations": (
+        "Business claims monthly production capacity of 10,000 meters"
+    ),
+}
+
+
 st.set_page_config(
     page_title="Auroraa | R&D Inference",
     page_icon="🧠",
@@ -160,8 +262,9 @@ def _start_new_test() -> None:
     st.session_state.last_error = None
     st.session_state.json_input = ""
     st.session_state.input_mode = "JSON input"
-    st.session_state.text_declared = ""
-    st.session_state.text_observed = ""
+    for key in TEXT_INPUT_DEFAULTS:
+        st.session_state[key] = ""
+        st.session_state[f"_{key}"] = ""
     st.session_state.file_notes = ""
     st.session_state.upload_generation += 1
 
@@ -169,9 +272,10 @@ def _start_new_test() -> None:
 def _load_sample_case(sample: Dict[str, Any]) -> None:
     st.session_state.input_mode = "JSON input"
     st.session_state.json_input = sample["json_str"]
-    st.session_state.text_declared = sample.get("text_narrative", "")
-    st.session_state.text_observed = ""
     st.session_state.last_error = None
+    for key, default_value in TEXT_INPUT_DEFAULTS.items():
+        st.session_state[key] = default_value
+        st.session_state[f"_{key}"] = default_value
 
 
 def _load_abc_textile() -> None:
@@ -180,8 +284,13 @@ def _load_abc_textile() -> None:
 
 
 def _clear_text_input() -> None:
-    st.session_state.text_declared = ""
-    st.session_state.text_observed = ""
+    for key in TEXT_INPUT_DEFAULTS:
+        st.session_state[key] = ""
+        st.session_state[f"_{key}"] = ""
+
+
+def _save_text_input(key: str) -> None:
+    st.session_state[f"_{key}"] = st.session_state[key]
 
 
 def _clear_file_input() -> None:
@@ -198,21 +307,9 @@ st.session_state.setdefault("json_input", ABC_TEXTILE_JSON)
 st.session_state.setdefault("input_mode", "JSON input")
 st.session_state.setdefault("last_response", None)
 st.session_state.setdefault("last_error", None)
-st.session_state.setdefault(
-    "text_declared",
-    "ABC Textile Industries (Surat). 5 years operational, 15 workers. "
-    "Declared monthly turnover: ₹15,00,000. Declared monthly production: "
-    "8,000 meters fabric. Production capacity: 10,000 meters/month.",
-)
-st.session_state.setdefault(
-    "text_observed",
-    "1. Purchase bill PUR-001: 1,000 kg cotton @ ₹150/kg (₹1,50,000).\n"
-    "2. Production records: 1,600 kg cotton consumed to produce 8,000 meters fabric.\n"
-    "3. Sales invoice SALE-001: ₹2,50,000 to ABC Garments.\n"
-    "4. Bank statement: ₹2,50,000 incoming credit from ABC Garments.\n"
-    "5. Premises video VID-001: 5 power looms operational, fabric rolls stacked.\n"
-    "6. Electricity bill: 4,500 units consumed (₹38,000).",
-)
+for key, default_value in TEXT_INPUT_DEFAULTS.items():
+    st.session_state.setdefault(f"_{key}", default_value)
+    st.session_state.setdefault(key, st.session_state[f"_{key}"])
 st.session_state.setdefault("file_notes", "")
 st.session_state.setdefault("upload_generation", 0)
 st.session_state.setdefault("history_entries", None)
@@ -353,18 +450,70 @@ if input_mode == "JSON input":
             st.error(f"Invalid JSON: {error}")
 
 elif input_mode == "Text input":
-    text_declared = st.text_area(
-        "Business information and declared claims",
-        key="text_declared",
-        height=150,
-        placeholder="Describe the business activity, age, employees, turnover, production, or capacity.",
+    st.caption(
+        "Enter the details you have in each section. Leave unknown information blank."
     )
-    text_observed = st.text_area(
-        "Observations and supporting evidence",
-        key="text_observed",
-        height=220,
-        placeholder="Add observed invoices, bank records, inventory, production, machinery, or utilities evidence.",
-    )
+    with st.expander("Business profile", expanded=True):
+        st.text_area(
+            "Business details",
+            key="text_business_details",
+            on_change=_save_text_input,
+            args=("text_business_details",),
+            height=130,
+            help="Name, type, industry, activity, business age, and employee count.",
+        )
+        st.text_area(
+            "Declared claims",
+            key="text_business_claims",
+            on_change=_save_text_input,
+            args=("text_business_claims",),
+            height=100,
+            help="Declared turnover, production, capacity, and other business claims.",
+        )
+        st.text_area(
+            "Additional business context",
+            key="text_business_context",
+            on_change=_save_text_input,
+            args=("text_business_context",),
+            height=90,
+            help="Optional context that does not fit the fields above.",
+        )
+
+    field_help = {
+        "Bills": "Bill ID, supplier, invoice number and date, and bill total.",
+        "Purchased items": "Item name, quantity, unit, unit price, and line total.",
+        "Declared inventory": "Item name, quantity, unit, and estimated value.",
+        "Image analysis": "Evidence ID, observed objects and counts, confidence, and observations.",
+        "Production records": "Date, product, quantity, and unit for each record.",
+        "Raw material consumption": "Material name, quantity, and unit consumed.",
+        "Finished goods": "Product name, quantity, and unit produced.",
+        "Sales bills": "Invoice number, customer, date, and total amount.",
+        "Customer details": "Customer name and relationship.",
+        "Sales summary": "Total sales value and reporting period.",
+        "Video analysis": "Evidence ID, duration, activities, machinery, observations, and confidence.",
+        "Machinery analysis": "Machine name, observed count, and condition.",
+        "Premises analysis": "Area inspected and observations.",
+        "Bank transactions": "Date, transaction type, amount, and description.",
+        "Electricity bills": "Billing month, units consumed, and bill amount.",
+        "GST records": "Reporting period and declared turnover.",
+        "Documents": "Document name or type and a short description.",
+        "Observations": "Other relevant observations, one per line.",
+    }
+    for section, subsections in TEXT_EVIDENCE_SECTIONS.items():
+        with st.expander(
+            section, expanded=section == "Purchase evidence"
+        ):
+            for label, key in subsections:
+                st.text_area(
+                    label,
+                    key=key,
+                    on_change=_save_text_input,
+                    args=(key,),
+                    height=100,
+                    help=field_help[label],
+                    placeholder=field_help[label],
+                )
+
     st.button(
         "Clear text",
         icon=":material/delete:",
@@ -461,19 +610,35 @@ if run_clicked:
             except json.JSONDecodeError as error:
                 st.error(f"Invalid JSON: {error}")
     elif input_mode == "Text input":
-        combined_text = "\n\n".join(
-            value.strip()
-            for value in (text_declared, text_observed)
-            if value and value.strip()
+        business_profile = "\n\n".join(
+            f"{label}:\n{st.session_state[key].strip()}"
+            for label, key in (
+                ("Business details", "text_business_details"),
+                ("Declared claims", "text_business_claims"),
+                ("Additional business context", "text_business_context"),
+            )
+            if st.session_state[key].strip()
         )
-        if combined_text:
+        observed_sections = []
+        for section, subsections in TEXT_EVIDENCE_SECTIONS.items():
+            section_content = [
+                f"{label}:\n{st.session_state[key].strip()}"
+                for label, key in subsections
+                if st.session_state[key].strip()
+            ]
+            if section_content:
+                observed_sections.append(
+                    f"{section}\n" + "\n\n".join(section_content)
+                )
+
+        observed_evidence = "\n\n".join(observed_sections)
+        if business_profile or observed_evidence:
             payload = {
-                "declared_information": text_declared.strip() or None,
-                "observed_evidence": text_observed.strip() or None,
-                "text": combined_text,
+                "declared_information": business_profile or None,
+                "observed_evidence": observed_evidence or None,
             }
         else:
-            st.warning("Add business information or observations before running inference.")
+            st.warning("Add business information or evidence before running inference.")
     elif uploaded_files:
         if file_json_candidate is not None:
             payload = file_json_candidate

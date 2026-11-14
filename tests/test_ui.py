@@ -4,6 +4,7 @@ Unit tests for Auroraa R&D Streamlit UI components, sample data, and API client.
 
 import json
 from types import SimpleNamespace
+from unittest.mock import patch
 from streamlit.testing.v1 import AppTest
 
 from app.schemas.request_schemas import ExplainRequest
@@ -87,6 +88,50 @@ def test_full_report_is_rendered_as_markdown():
     ).run()
     assert not app.exception
     assert app.markdown[0].value == report
+
+
+def test_text_input_collects_categorized_business_evidence():
+    with (
+        patch(
+            "ui.api_client.check_health",
+            return_value={"ok": False, "error": "Backend unavailable"},
+        ),
+        patch(
+            "ui.api_client.run_inference",
+            return_value=(True, {"status": "completed", "report": "Test report"}),
+        ) as inference,
+    ):
+        app = AppTest.from_file("../ui/app.py")
+        app.session_state["input_mode"] = "Text input"
+        app.session_state["backend_url"] = "http://127.0.0.1:9999"
+        app.run()
+
+        assert not app.exception
+        assert app.text_area(key="text_purchase_bills").value
+        assert app.text_area(key="text_inventory_images").value
+        assert app.text_area(key="text_physical_video").value
+
+        app.text_area(key="text_purchase_bills").set_value(
+            "Bill INV-10 from Cotton Supply, total INR 500"
+        )
+        app.text_area(key="text_sales_bills").set_value(
+            "Invoice SALE-10 to Fabric House, total INR 800"
+        )
+        app.segmented_control(key="input_mode").set_value("JSON input").run()
+        app.segmented_control(key="input_mode").set_value("Text input").run()
+
+        assert (
+            app.text_area(key="text_purchase_bills").value
+            == "Bill INV-10 from Cotton Supply, total INR 500"
+        )
+        app.button(key="run_inference").click().run()
+
+        assert not app.exception
+        payload = inference.call_args.args[0]
+        assert "Bill INV-10" in payload["observed_evidence"]
+        assert "Purchase evidence" in payload["observed_evidence"]
+        assert "Sales evidence" in payload["observed_evidence"]
+        assert "Declared claims" in payload["declared_information"]
 
 
 def test_media_uploads_do_not_create_unverified_observations():
