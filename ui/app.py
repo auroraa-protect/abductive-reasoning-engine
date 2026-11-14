@@ -146,6 +146,20 @@ def _collect_section_text(section: str, label: str) -> str:
 # input_type: "text" | "number" | "date" | "area"
 # ---------------------------------------------------------------------------
 _SECTION_FIELDS: dict = {
+    # Business profile
+    "business_details": [
+        ("Business name", "text", "e.g. ABC Textile Industries"),
+        ("Business type", "text", "e.g. manufacturing / trading / service"),
+        ("Industry", "text", "e.g. textile"),
+        ("Business activity", "text", "e.g. Cotton fabric manufacturing"),
+        ("Business age (years)", "number", "e.g. 5"),
+        ("Number of employees", "number", "e.g. 15"),
+    ],
+    "business_claims": [
+        ("Declared monthly turnover (₹)", "number", "e.g. 1500000"),
+        ("Declared monthly production", "text", "e.g. 8000 meters"),
+        ("Declared production capacity", "text", "e.g. 10000 meters/month"),
+    ],
     # Purchase evidence
     "purchase_bills": [
         ("Supplier name", "text", "e.g. XYZ Cotton Traders"),
@@ -280,21 +294,8 @@ _STRUCTURED_SECTIONS = [
     ]),
 ]
 
-# Legacy TEXT_INPUT_DEFAULTS kept for Business profile section only
+# TEXT_INPUT_DEFAULTS: only the extra context textarea remains as free text
 TEXT_INPUT_DEFAULTS = {
-    "text_business_details": (
-        "Business name: ABC Textile Industries\n"
-        "Business type: manufacturing\n"
-        "Industry: textile\n"
-        "Business activity: Cotton fabric manufacturing\n"
-        "Business age: 5 years\n"
-        "Employees: 15"
-    ),
-    "text_business_claims": (
-        "Declared monthly turnover: INR 1,500,000\n"
-        "Declared monthly production: 8,000 meters\n"
-        "Declared production capacity: 10,000 meters/month"
-    ),
     "text_business_context": "",
 }
 
@@ -449,6 +450,8 @@ def _clear_text_input() -> None:
     for key in TEXT_INPUT_DEFAULTS:
         st.session_state[key] = ""
         st.session_state[f"_{key}"] = ""
+    for section_key in ("business_details", "business_claims"):
+        _clear_section(section_key)
     for section_key in _SECTION_FIELDS:
         _clear_section(section_key)
 
@@ -618,29 +621,20 @@ elif input_mode == "Text input":
         "Fill in each field separately. Use **+ Add another** to add multiple entries. Leave unknown fields blank."
     )
     with st.expander("Business profile", expanded=True):
-        st.text_area(
-            "Business details",
-            key="text_business_details",
-            on_change=_save_text_input,
-            args=("text_business_details",),
-            height=130,
-            help="Name, type, industry, activity, business age, and employee count.",
-        )
-        st.text_area(
-            "Declared claims",
-            key="text_business_claims",
-            on_change=_save_text_input,
-            args=("text_business_claims",),
-            height=100,
-            help="Declared turnover, production, capacity, and other business claims.",
-        )
+        st.markdown("##### Business details")
+        _render_structured_section("business_details", "Business details")
+        st.write("")
+        st.markdown("##### Declared claims")
+        _render_structured_section("business_claims", "Declared claims")
+        st.write("")
         st.text_area(
             "Additional business context",
             key="text_business_context",
             on_change=_save_text_input,
             args=("text_business_context",),
-            height=90,
+            height=80,
             help="Optional context that does not fit the fields above.",
+            placeholder="Any extra context, notes, or background not captured above.",
         )
 
     for section_name, subsections in _STRUCTURED_SECTIONS:
@@ -746,14 +740,16 @@ if run_clicked:
             except json.JSONDecodeError as error:
                 st.error(f"Invalid JSON: {error}")
     elif input_mode == "Text input":
+        _biz_details = _collect_section_text("business_details", "Business details")
+        _biz_claims = _collect_section_text("business_claims", "Declared claims")
+        _biz_context = st.session_state.get("text_business_context", "").strip()
         business_profile = "\n\n".join(
-            f"{label}:\n{st.session_state[key].strip()}"
-            for label, key in (
-                ("Business details", "text_business_details"),
-                ("Declared claims", "text_business_claims"),
-                ("Additional business context", "text_business_context"),
+            part for part in (
+                f"Business details:\n{_biz_details}" if _biz_details else "",
+                f"Declared claims:\n{_biz_claims}" if _biz_claims else "",
+                f"Additional business context:\n{_biz_context}" if _biz_context else "",
             )
-            if st.session_state[key].strip()
+            if part
         )
         observed_sections = []
         for section_name, subsections in _STRUCTURED_SECTIONS:
