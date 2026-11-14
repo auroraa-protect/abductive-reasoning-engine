@@ -38,41 +38,249 @@ except ImportError:
     from sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
 
 
-TEXT_EVIDENCE_SECTIONS = {
-    "Purchase evidence": [
-        ("Bills", "text_purchase_bills"),
-        ("Purchased items", "text_purchase_items"),
+# ---------------------------------------------------------------------------
+# Structured text-input helpers
+# ---------------------------------------------------------------------------
+
+def _skey(section: str, idx: int, field: str) -> str:
+    """Build a stable session-state key for a structured field entry."""
+    return f"sf__{section}__{idx}__{field}"
+
+
+def _get_count(section: str) -> int:
+    return st.session_state.get(f"sf_count__{section}", 1)
+
+
+def _add_entry(section: str) -> None:
+    st.session_state[f"sf_count__{section}"] = _get_count(section) + 1
+
+
+def _remove_entry(section: str, idx: int) -> None:
+    count = _get_count(section)
+    # Shift all entries above idx down by one
+    for i in range(idx, count - 1):
+        for field in _SECTION_FIELDS.get(section, []):
+            k_src = _skey(section, i + 1, field[0])
+            k_dst = _skey(section, i, field[0])
+            st.session_state[k_dst] = st.session_state.get(k_src, "")
+    # Clear the last entry
+    for field in _SECTION_FIELDS.get(section, []):
+        k = _skey(section, count - 1, field[0])
+        st.session_state.pop(k, None)
+    st.session_state[f"sf_count__{section}"] = max(1, count - 1)
+
+
+def _clear_section(section: str) -> None:
+    count = _get_count(section)
+    for i in range(count):
+        for field in _SECTION_FIELDS.get(section, []):
+            st.session_state.pop(_skey(section, i, field[0]), None)
+    st.session_state[f"sf_count__{section}"] = 1
+
+
+def _render_structured_section(section: str, label: str) -> None:
+    """Render labelled input fields for every entry in a structured section."""
+    fields = _SECTION_FIELDS.get(section, [])
+    if not fields:
+        return
+    count = _get_count(section)
+    for i in range(count):
+        if count > 1:
+            col_title, col_del = st.columns([10, 1])
+            with col_title:
+                st.markdown(f"**{label} {i + 1}**")
+            with col_del:
+                st.button(
+                    "✕",
+                    key=f"del_{section}_{i}",
+                    on_click=_remove_entry,
+                    args=(section, i),
+                    help="Remove this entry",
+                )
+        cols_per_row = 2
+        field_groups = [fields[j:j+cols_per_row] for j in range(0, len(fields), cols_per_row)]
+        for group in field_groups:
+            cols = st.columns(len(group))
+            for col, (fname, ftype, fhelp) in zip(cols, group):
+                key = _skey(section, i, fname)
+                with col:
+                    if ftype == "text":
+                        st.text_input(fname, key=key, help=fhelp, placeholder=fhelp)
+                    elif ftype == "number":
+                        st.text_input(fname, key=key, help=fhelp, placeholder="e.g. 150000")
+                    elif ftype == "date":
+                        st.text_input(fname, key=key, help=fhelp, placeholder="YYYY-MM-DD")
+                    elif ftype == "area":
+                        st.text_area(fname, key=key, help=fhelp, height=80, placeholder=fhelp)
+        if i < count - 1:
+            st.divider()
+
+    st.button(
+        f"＋ Add another {label.lower()}",
+        key=f"add_{section}",
+        on_click=_add_entry,
+        args=(section,),
+    )
+
+
+def _collect_section_text(section: str, label: str) -> str:
+    """Collect all filled entries in a section into a human-readable string."""
+    fields = _SECTION_FIELDS.get(section, [])
+    if not fields:
+        return ""
+    count = _get_count(section)
+    lines = []
+    for i in range(count):
+        parts = []
+        for fname, _ftype, _fhelp in fields:
+            val = st.session_state.get(_skey(section, i, fname), "").strip()
+            if val:
+                parts.append(f"{fname}: {val}")
+        if parts:
+            lines.append(f"{label} {i+1}: " + "; ".join(parts) if count > 1 else "; ".join(parts))
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Field definitions: (field_name, input_type, placeholder_hint)
+# input_type: "text" | "number" | "date" | "area"
+# ---------------------------------------------------------------------------
+_SECTION_FIELDS: dict = {
+    # Purchase evidence
+    "purchase_bills": [
+        ("Supplier name", "text", "e.g. XYZ Cotton Traders"),
+        ("Invoice date", "date", "YYYY-MM-DD"),
+        ("Total amount (₹)", "number", "e.g. 150000"),
     ],
-    "Inventory evidence": [
-        ("Declared inventory", "text_inventory_declared"),
-        ("Image analysis", "text_inventory_images"),
+    "purchase_items": [
+        ("Item name", "text", "e.g. Raw Cotton"),
+        ("Quantity", "number", "e.g. 1000"),
+        ("Unit", "text", "e.g. kg"),
+        ("Unit price (₹)", "number", "e.g. 150"),
+        ("Total amount (₹)", "number", "e.g. 150000"),
     ],
-    "Production evidence": [
-        ("Production records", "text_production_records"),
-        ("Raw material consumption", "text_production_consumption"),
-        ("Finished goods", "text_production_finished_goods"),
+    # Inventory evidence
+    "inventory_declared": [
+        ("Item name", "text", "e.g. Raw Cotton"),
+        ("Quantity", "number", "e.g. 500"),
+        ("Unit", "text", "e.g. kg"),
+        ("Estimated value (₹)", "number", "e.g. 75000"),
     ],
-    "Sales evidence": [
-        ("Sales bills", "text_sales_bills"),
-        ("Customer details", "text_sales_customers"),
-        ("Sales summary", "text_sales_summary"),
+    "inventory_images": [
+        ("Observed objects", "text", "e.g. Cotton bags × 20, Fabric rolls × 35"),
+        ("Observations", "area", "e.g. Inventory stored inside warehouse"),
+        ("Analysis confidence", "number", "0.0 – 1.0"),
     ],
-    "Physical evidence": [
-        ("Video analysis", "text_physical_video"),
-        ("Machinery analysis", "text_physical_machinery"),
-        ("Premises analysis", "text_physical_premises"),
+    # Production evidence
+    "production_records": [
+        ("Date", "date", "YYYY-MM-DD"),
+        ("Product", "text", "e.g. Cotton Fabric"),
+        ("Quantity", "number", "e.g. 8000"),
+        ("Unit", "text", "e.g. meters"),
     ],
-    "Financial evidence": [
-        ("Bank transactions", "text_financial_bank"),
-        ("Electricity bills", "text_financial_electricity"),
-        ("GST records", "text_financial_gst"),
+    "production_consumption": [
+        ("Material", "text", "e.g. Raw Cotton"),
+        ("Quantity consumed", "number", "e.g. 1600"),
+        ("Unit", "text", "e.g. kg"),
     ],
-    "Additional evidence": [
-        ("Documents", "text_additional_documents"),
-        ("Observations", "text_additional_observations"),
+    "production_finished_goods": [
+        ("Product", "text", "e.g. Cotton Fabric"),
+        ("Quantity", "number", "e.g. 8000"),
+        ("Unit", "text", "e.g. meters"),
+    ],
+    # Sales evidence
+    "sales_bills": [
+        ("Customer name", "text", "e.g. ABC Garments"),
+        ("Invoice date", "date", "YYYY-MM-DD"),
+        ("Total amount (₹)", "number", "e.g. 250000"),
+    ],
+    "sales_customers": [
+        ("Customer name", "text", "e.g. ABC Garments"),
+        ("Relationship", "text", "e.g. Retailer"),
+    ],
+    "sales_summary": [
+        ("Total sales value (₹)", "number", "e.g. 250000"),
+        ("Period", "text", "e.g. October 2026"),
+    ],
+    # Physical evidence
+    "physical_video": [
+        ("Duration (seconds)", "number", "e.g. 120"),
+        ("Observed activities", "area", "e.g. Workers operating machinery"),
+        ("Observed machinery", "text", "e.g. Power loom, Fabric cutting machine"),
+        ("Analysis confidence", "number", "0.0 – 1.0"),
+    ],
+    "physical_machinery": [
+        ("Machine name", "text", "e.g. Power Loom"),
+        ("Observed count", "number", "e.g. 5"),
+        ("Condition", "text", "e.g. Operational"),
+    ],
+    "physical_premises": [
+        ("Area", "text", "e.g. Production floor"),
+        ("Observations", "area", "e.g. Manufacturing equipment and fabric rolls observed"),
+    ],
+    # Financial evidence
+    "financial_bank": [
+        ("Transaction date", "date", "YYYY-MM-DD"),
+        ("Type", "text", "credit / debit"),
+        ("Amount (₹)", "number", "e.g. 250000"),
+        ("Description", "text", "e.g. ABC Garments payment"),
+    ],
+    "financial_electricity": [
+        ("Billing month", "text", "e.g. October 2026"),
+        ("Units consumed", "number", "e.g. 4500"),
+        ("Bill amount (₹)", "number", "e.g. 38000"),
+    ],
+    "financial_gst": [
+        ("Period", "text", "e.g. October 2026"),
+        ("Declared turnover (₹)", "number", "e.g. 1500000"),
+    ],
+    # Additional evidence
+    "additional_documents": [
+        ("Document name / type", "text", "e.g. Lease agreement"),
+        ("Description", "area", "e.g. Office lease for 1,200 sq ft"),
+    ],
+    "additional_observations": [
+        ("Observation", "area", "e.g. Business claims monthly production capacity of 10,000 meters"),
     ],
 }
 
+# Map of section-key → (display label, section id)
+_STRUCTURED_SECTIONS = [
+    ("Purchase evidence", [
+        ("Bill", "purchase_bills"),
+        ("Purchased item", "purchase_items"),
+    ]),
+    ("Inventory evidence", [
+        ("Inventory item", "inventory_declared"),
+        ("Image analysis", "inventory_images"),
+    ]),
+    ("Production evidence", [
+        ("Production record", "production_records"),
+        ("Material consumption", "production_consumption"),
+        ("Finished goods", "production_finished_goods"),
+    ]),
+    ("Sales evidence", [
+        ("Sales bill", "sales_bills"),
+        ("Customer", "sales_customers"),
+        ("Sales summary", "sales_summary"),
+    ]),
+    ("Physical evidence", [
+        ("Video analysis", "physical_video"),
+        ("Machinery", "physical_machinery"),
+        ("Premises observation", "physical_premises"),
+    ]),
+    ("Financial evidence", [
+        ("Bank transaction", "financial_bank"),
+        ("Electricity bill", "financial_electricity"),
+        ("GST record", "financial_gst"),
+    ]),
+    ("Additional evidence", [
+        ("Document", "additional_documents"),
+        ("Observation", "additional_observations"),
+    ]),
+]
+
+# Legacy TEXT_INPUT_DEFAULTS kept for Business profile section only
 TEXT_INPUT_DEFAULTS = {
     "text_business_details": (
         "Business name: ABC Textile Industries\n"
@@ -88,55 +296,6 @@ TEXT_INPUT_DEFAULTS = {
         "Declared production capacity: 10,000 meters/month"
     ),
     "text_business_context": "",
-    "text_purchase_bills": (
-        "Bill ID: PUR-001; Supplier: XYZ Cotton Traders; "
-        "Invoice: INV-101; Date: 2026-10-01; Total: INR 150,000"
-    ),
-    "text_purchase_items": (
-        "Raw Cotton: 1,000 kg at INR 150/kg; total INR 150,000"
-    ),
-    "text_inventory_declared": (
-        "Raw Cotton: 500 kg, estimated value INR 75,000\n"
-        "Finished Fabric: 2,000 meters, estimated value INR 300,000"
-    ),
-    "text_inventory_images": (
-        "IMG-001: 20 cotton storage bags (confidence 0.91); "
-        "35 fabric rolls (confidence 0.94). "
-        "Stored inside the warehouse; analysis confidence 0.89."
-    ),
-    "text_production_records": (
-        "2026-10-15: Cotton Fabric, 8,000 meters"
-    ),
-    "text_production_consumption": "Raw Cotton: 1,600 kg",
-    "text_production_finished_goods": "Cotton Fabric: 8,000 meters",
-    "text_sales_bills": (
-        "SALE-001; Customer: ABC Garments; Date: 2026-10-20; "
-        "Total: INR 250,000"
-    ),
-    "text_sales_customers": "ABC Garments: Retailer",
-    "text_sales_summary": "October 2026 total sales: INR 250,000",
-    "text_physical_video": (
-        "VID-001; 120 seconds; Workers operating textile machinery; "
-        "Power loom and fabric cutting machine; "
-        "Manufacturing activity visible; confidence 0.88"
-    ),
-    "text_physical_machinery": "Power Loom: 5 units, operational",
-    "text_physical_premises": (
-        "Production floor: Manufacturing equipment and fabric rolls observed"
-    ),
-    "text_financial_bank": (
-        "2026-10-21; credit INR 250,000; ABC Garments payment"
-    ),
-    "text_financial_electricity": (
-        "October 2026: 4,500 units consumed; bill INR 38,000"
-    ),
-    "text_financial_gst": (
-        "October 2026 declared turnover: INR 1,500,000"
-    ),
-    "text_additional_documents": "",
-    "text_additional_observations": (
-        "Business claims monthly production capacity of 10,000 meters"
-    ),
 }
 
 
@@ -265,6 +424,9 @@ def _start_new_test() -> None:
     for key in TEXT_INPUT_DEFAULTS:
         st.session_state[key] = ""
         st.session_state[f"_{key}"] = ""
+    # Clear all structured evidence fields
+    for section_key in _SECTION_FIELDS:
+        _clear_section(section_key)
     st.session_state.file_notes = ""
     st.session_state.upload_generation += 1
 
@@ -287,6 +449,8 @@ def _clear_text_input() -> None:
     for key in TEXT_INPUT_DEFAULTS:
         st.session_state[key] = ""
         st.session_state[f"_{key}"] = ""
+    for section_key in _SECTION_FIELDS:
+        _clear_section(section_key)
 
 
 def _save_text_input(key: str) -> None:
@@ -451,7 +615,7 @@ if input_mode == "JSON input":
 
 elif input_mode == "Text input":
     st.caption(
-        "Enter the details you have in each section. Leave unknown information blank."
+        "Fill in each field separately. Use **+ Add another** to add multiple entries. Leave unknown fields blank."
     )
     with st.expander("Business profile", expanded=True):
         st.text_area(
@@ -479,40 +643,12 @@ elif input_mode == "Text input":
             help="Optional context that does not fit the fields above.",
         )
 
-    field_help = {
-        "Bills": "Bill ID, supplier, invoice number and date, and bill total.",
-        "Purchased items": "Item name, quantity, unit, unit price, and line total.",
-        "Declared inventory": "Item name, quantity, unit, and estimated value.",
-        "Image analysis": "Evidence ID, observed objects and counts, confidence, and observations.",
-        "Production records": "Date, product, quantity, and unit for each record.",
-        "Raw material consumption": "Material name, quantity, and unit consumed.",
-        "Finished goods": "Product name, quantity, and unit produced.",
-        "Sales bills": "Invoice number, customer, date, and total amount.",
-        "Customer details": "Customer name and relationship.",
-        "Sales summary": "Total sales value and reporting period.",
-        "Video analysis": "Evidence ID, duration, activities, machinery, observations, and confidence.",
-        "Machinery analysis": "Machine name, observed count, and condition.",
-        "Premises analysis": "Area inspected and observations.",
-        "Bank transactions": "Date, transaction type, amount, and description.",
-        "Electricity bills": "Billing month, units consumed, and bill amount.",
-        "GST records": "Reporting period and declared turnover.",
-        "Documents": "Document name or type and a short description.",
-        "Observations": "Other relevant observations, one per line.",
-    }
-    for section, subsections in TEXT_EVIDENCE_SECTIONS.items():
-        with st.expander(
-            section, expanded=section == "Purchase evidence"
-        ):
-            for label, key in subsections:
-                st.text_area(
-                    label,
-                    key=key,
-                    on_change=_save_text_input,
-                    args=(key,),
-                    height=100,
-                    help=field_help[label],
-                    placeholder=field_help[label],
-                )
+    for section_name, subsections in _STRUCTURED_SECTIONS:
+        with st.expander(section_name, expanded=section_name == "Purchase evidence"):
+            for label, section_key in subsections:
+                st.markdown(f"##### {label}s")
+                _render_structured_section(section_key, label)
+                st.write("")
 
     st.button(
         "Clear text",
@@ -620,16 +756,14 @@ if run_clicked:
             if st.session_state[key].strip()
         )
         observed_sections = []
-        for section, subsections in TEXT_EVIDENCE_SECTIONS.items():
-            section_content = [
-                f"{label}:\n{st.session_state[key].strip()}"
-                for label, key in subsections
-                if st.session_state[key].strip()
-            ]
-            if section_content:
-                observed_sections.append(
-                    f"{section}\n" + "\n\n".join(section_content)
-                )
+        for section_name, subsections in _STRUCTURED_SECTIONS:
+            section_lines = []
+            for label, section_key in subsections:
+                block = _collect_section_text(section_key, label)
+                if block.strip():
+                    section_lines.append(f"{label}s:\n{block}")
+            if section_lines:
+                observed_sections.append(f"{section_name}\n" + "\n\n".join(section_lines))
 
         observed_evidence = "\n\n".join(observed_sections)
         if business_profile or observed_evidence:
