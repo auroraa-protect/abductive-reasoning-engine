@@ -160,10 +160,8 @@ def _start_new_test() -> None:
     st.session_state.last_error = None
     st.session_state.json_input = ""
     st.session_state.input_mode = "JSON input"
-    st.session_state.text_case_id = ""
     st.session_state.text_declared = ""
     st.session_state.text_observed = ""
-    st.session_state.file_case_id = ""
     st.session_state.file_notes = ""
     st.session_state.upload_generation += 1
 
@@ -171,7 +169,6 @@ def _start_new_test() -> None:
 def _load_sample_case(sample: Dict[str, Any]) -> None:
     st.session_state.input_mode = "JSON input"
     st.session_state.json_input = sample["json_str"]
-    st.session_state.text_case_id = sample["case_id"]
     st.session_state.text_declared = sample.get("text_narrative", "")
     st.session_state.text_observed = ""
     st.session_state.last_error = None
@@ -183,13 +180,11 @@ def _load_abc_textile() -> None:
 
 
 def _clear_text_input() -> None:
-    st.session_state.text_case_id = ""
     st.session_state.text_declared = ""
     st.session_state.text_observed = ""
 
 
 def _clear_file_input() -> None:
-    st.session_state.file_case_id = ""
     st.session_state.file_notes = ""
     st.session_state.upload_generation += 1
 
@@ -203,7 +198,6 @@ st.session_state.setdefault("json_input", ABC_TEXTILE_JSON)
 st.session_state.setdefault("input_mode", "JSON input")
 st.session_state.setdefault("last_response", None)
 st.session_state.setdefault("last_error", None)
-st.session_state.setdefault("text_case_id", "AUR-CASE-001")
 st.session_state.setdefault(
     "text_declared",
     "ABC Textile Industries (Surat). 5 years operational, 15 workers. "
@@ -219,7 +213,6 @@ st.session_state.setdefault(
     "5. Premises video VID-001: 5 power looms operational, fabric rolls stacked.\n"
     "6. Electricity bill: 4,500 units consumed (₹38,000).",
 )
-st.session_state.setdefault("file_case_id", "AUR-CASE-UPLOAD-001")
 st.session_state.setdefault("file_notes", "")
 st.session_state.setdefault("upload_generation", 0)
 st.session_state.setdefault("history_entries", None)
@@ -294,7 +287,6 @@ with st.sidebar:
         else:
             for entry in reversed(history[-5:]):
                 st.text(
-                    f"{entry.get('case_id', 'Unknown case')} · "
                     f"{entry.get('timestamp', '')} · "
                     f"{entry.get('total_tokens', '—')} tokens"
                 )
@@ -308,12 +300,10 @@ st.markdown(
 
 last_response = st.session_state.last_response
 if last_response:
-    current_case_id = last_response.get("case_id", "—")
     inference_status = str(last_response.get("status", "completed")).replace("_", " ").title()
 else:
-    current_case_id = "—"
     inference_status = "Ready"
-st.text(f"Case ID: {current_case_id}    ·    Inference status: {inference_status}")
+st.text(f"Inference status: {inference_status}")
 
 st.header("Submit business evidence")
 input_mode = st.segmented_control(
@@ -350,7 +340,7 @@ if input_mode == "JSON input":
         "Business evidence JSON",
         key="json_input",
         height=360,
-        placeholder='{\n  "case_id": "AUR-CASE-001",\n  "business_profile": {}\n}',
+        placeholder='{\n  "business_profile": {}\n}',
     )
     if validate_json:
         try:
@@ -363,7 +353,6 @@ if input_mode == "JSON input":
             st.error(f"Invalid JSON: {error}")
 
 elif input_mode == "Text input":
-    text_case_id = st.text_input("Case ID", key="text_case_id")
     text_declared = st.text_area(
         "Business information and declared claims",
         key="text_declared",
@@ -438,7 +427,6 @@ else:
                         "in the notes or provide a text-searchable document."
                     )
 
-    file_case_id = st.text_input("Case ID", key="file_case_id")
     file_notes = st.text_area(
         "Additional business information or inspector notes",
         key="file_notes",
@@ -480,7 +468,6 @@ if run_clicked:
         )
         if combined_text:
             payload = {
-                "case_id": text_case_id.strip() or "AUR-CASE-TEXT",
                 "declared_information": text_declared.strip() or None,
                 "observed_evidence": text_observed.strip() or None,
                 "text": combined_text,
@@ -496,7 +483,6 @@ if run_clicked:
                 combined_file_text += f"\n\n=== Inspector Notes ===\n{file_notes.strip()}"
             if combined_file_text.strip():
                 payload = {
-                    "case_id": file_case_id.strip() or "AUR-CASE-UPLOAD",
                     "text": combined_file_text.strip(),
                 }
             else:
@@ -526,7 +512,7 @@ if st.session_state.last_error and not run_clicked:
 
 if st.session_state.last_response:
     response = st.session_state.last_response
-    st.header(f"Inference results · {response.get('case_id', 'Unknown case')}")
+    st.header("Inference results")
     status_text = str(response.get("status", "completed")).replace("_", " ").title()
     st.caption(f"Inference status: {status_text}")
 
@@ -534,13 +520,12 @@ if st.session_state.last_response:
     if not render_report_markdown(report):
         st.warning("The inference response did not contain a Markdown report.")
 
-    case_id = str(response.get("case_id", "auroraa-case")).replace(" ", "_")
     download_columns = st.columns(2)
     with download_columns[0]:
         st.download_button(
             "Download inference response",
             data=json.dumps(response, ensure_ascii=False, indent=2),
-            file_name=f"{case_id}_inference_response.json",
+            file_name="inference_response.json",
             mime="application/json",
             icon=":material/download:",
         )
@@ -548,7 +533,7 @@ if st.session_state.last_response:
         st.download_button(
             "Download Markdown report",
             data=report if isinstance(report, str) else "",
-            file_name=f"{case_id}_reasoning_report.md",
+            file_name="reasoning_report.md",
             mime="text/markdown",
             icon=":material/description:",
         )

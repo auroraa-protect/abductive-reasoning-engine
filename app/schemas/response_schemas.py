@@ -19,7 +19,6 @@ class ExplainResponse(BaseModel):
     """
     model_config = ConfigDict(extra="ignore")
 
-    case_id: str = Field(..., description="Verification case ID")
     status: str = Field(default="completed", description="Status: completed, partial, or failed")
     overall_assessment: Optional[str] = Field(default=None, description="Conclusion: MATCH, PARTIAL MATCH, MISMATCH, or INSUFFICIENT EVIDENCE")
     report: str = Field(..., description="Full human-readable abductive reasoning report")

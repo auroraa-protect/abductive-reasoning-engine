@@ -150,7 +150,7 @@ def build_user_payload(req: ExplainRequest) -> str:
     Format case details so declared claims and observed evidence are clearly
     distinguishable, with pre-computed facts appended.
     """
-    parts = [f"CASE IDENTIFIER: {req.case_id}"]
+    parts = []
 
     # 1. Natural language direct text if supplied
     if req.text:
@@ -320,7 +320,6 @@ async def generate(request: ExplainRequest) -> ExplainResponse:
 
     # Record in history log
     _token_history.append({
-        "case_id": request.case_id or "CASE-001",
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         **token_metrics.model_dump(),
     })
@@ -329,7 +328,6 @@ async def generate(request: ExplainRequest) -> ExplainResponse:
     sections, overall_status = parse_report_sections(report)
 
     return ExplainResponse(
-        case_id=request.case_id or "CASE-001",
         status="completed",
         overall_assessment=overall_status,
         report=report,

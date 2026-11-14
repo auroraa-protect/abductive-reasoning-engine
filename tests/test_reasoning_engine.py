@@ -83,7 +83,6 @@ def test_abc_textile_payload_structure():
 # ---------------------------------------------------------------------------
 def test_trading_industry_case():
     req = ExplainRequest(
-        case_id="AUR-CASE-002",
         business_profile=BusinessProfile(
             business_name="Sunrise Electronics Trading",
             business_type="trading",
@@ -132,7 +131,6 @@ def test_trading_industry_case():
 # ---------------------------------------------------------------------------
 def test_services_industry_case():
     req = ExplainRequest(
-        case_id="AUR-CASE-003",
         text="""
         Apex Software Consulting provides custom web development and enterprise cloud consulting.
         The firm declares annual revenue of Rs 1.2 Crore (Rs 10 Lakhs/month) with 8 full-time software engineers.

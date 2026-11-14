@@ -1,7 +1,4 @@
 {
-  "case_id": "AUR-CASE-001",
-  "schema_version": "1.0",
-
   "business_profile": {
     "business_name": "ABC Textile Industries",
     "business_type": "manufacturing",

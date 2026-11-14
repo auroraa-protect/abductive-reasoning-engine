@@ -26,20 +26,19 @@ def test_sample_data_validity():
     """Verify that sample cases load and conform to ExplainRequest schema."""
     # Test ABC Textile Industries
     req_abc = ExplainRequest.model_validate(ABC_TEXTILE_DATA)
-    assert req_abc.case_id == "AUR-CASE-001"
     assert req_abc.business_profile.business_name == "ABC Textile Industries"
 
     # Test JSON string parsing
     parsed = json.loads(ABC_TEXTILE_JSON)
-    assert parsed["case_id"] == "AUR-CASE-001"
+    assert parsed["business_profile"]["business_name"] == "ABC Textile Industries"
 
     # Test Trading Case
     req_trade = ExplainRequest.model_validate(SUNRISE_TRADING_DATA)
-    assert req_trade.case_id == "AUR-CASE-002"
+    assert req_trade.business_profile.business_name == "Sunrise Electronics Trading"
 
     # Test Services Case
     req_serv = ExplainRequest.model_validate(APEX_SERVICES_DATA)
-    assert req_serv.case_id == "AUR-CASE-003"
+    assert req_serv.business_profile.business_name == "Apex Software Consulting"
 
     assert len(SAMPLE_CASES) == 3
 
@@ -58,7 +57,7 @@ def test_api_client_offline_handling():
     assert health["ok"] is False
     assert "Cannot connect" in health["error"] or "refused" in health["error"].lower()
 
-    success, res = run_inference({"case_id": "TEST"}, base_url="http://127.0.0.1:9999")
+    success, res = run_inference({}, base_url="http://127.0.0.1:9999")
     assert success is False
     assert "Connection failed" in res["error"] or "Unable to connect" in res["error"]
 

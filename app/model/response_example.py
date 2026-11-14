@@ -1,5 +1,4 @@
 {
-  "case_id": "AUR-CASE-001",
   "status": "completed",
 
   "business_understanding": {

@@ -46,7 +46,6 @@ Primary verification endpoint. Accepts either flexible natural language text or 
 #### Example 1: Natural Language Text Input
 ```json
 {
-  "case_id": "AUR-CASE-001",
   "text": "ABC Textile Industries is a cotton fabric manufacturer in Surat. They declared monthly turnover of Rs 15 Lakhs and 8,000 meters production. We have one purchase invoice for 1,000 kg cotton at Rs 1.5 Lakhs, but production log shows 1,600 kg cotton consumed. Premises video shows 5 power looms running and finished fabric rolls in warehouse."
 }
 ```

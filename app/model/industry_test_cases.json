@@ -1,6 +1,5 @@
 [
   {
-    "case_id": "AUR-CASE-001",
     "industry": "Manufacturing",
     "business_name": "ABC Textile Industries",
     "description": "MSME cotton fabric manufacturer with 5 operational power looms, 15 workers, and capacity of 10,000 meters/month.",
@@ -16,7 +15,6 @@
     "sample_payload_file": "app/model/request_example.txt"
   },
   {
-    "case_id": "AUR-CASE-002",
     "industry": "Trading",
     "business_name": "Sunrise Electronics Trading",
     "description": "Wholesale distributor of mobile phone accessories and peripherals selling to regional retail electronics stores.",
@@ -29,7 +27,6 @@
     ]
   },
   {
-    "case_id": "AUR-CASE-003",
     "industry": "Services",
     "business_name": "Apex Software Consulting",
     "description": "IT services and staffing company offering custom enterprise software engineering and cloud consulting.",

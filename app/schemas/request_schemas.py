@@ -133,9 +133,6 @@ class ExplainRequest(BaseModel):
     """
     model_config = ConfigDict(extra="ignore")
 
-    case_id: Optional[str] = Field(default="AUR-CASE-001", description="Unique verification case ID")
-    schema_version: Optional[str] = Field(default="1.0")
-
     # Flexible natural language / text input support
     text: Optional[str] = Field(default=None, description="Free-form natural language business and evidence information")
     declared_information: Optional[Union[Dict[str, Any], str]] = Field(default=None, description="Declared claims or profile text")

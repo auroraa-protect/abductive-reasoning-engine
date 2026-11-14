@@ -7,8 +7,6 @@ import json
 from typing import Dict, Any
 
 ABC_TEXTILE_DATA: Dict[str, Any] = {
-    "case_id": "AUR-CASE-001",
-    "schema_version": "1.0",
     "business_profile": {
         "business_name": "ABC Textile Industries",
         "business_type": "manufacturing",
@@ -171,8 +169,6 @@ ABC_TEXTILE_DATA: Dict[str, Any] = {
 }
 
 SUNRISE_TRADING_DATA: Dict[str, Any] = {
-    "case_id": "AUR-CASE-002",
-    "schema_version": "1.0",
     "business_profile": {
         "business_name": "Sunrise Electronics Trading",
         "business_type": "trading",
@@ -254,8 +250,6 @@ SUNRISE_TRADING_DATA: Dict[str, Any] = {
 }
 
 APEX_SERVICES_DATA: Dict[str, Any] = {
-    "case_id": "AUR-CASE-003",
-    "schema_version": "1.0",
     "business_profile": {
         "business_name": "Apex Software Consulting",
         "business_type": "service",
@@ -330,7 +324,6 @@ Documentary and Physical Evidence:
 
 SAMPLE_CASES = {
     "ABC Textile Industries (Manufacturing - Standard Test Case)": {
-        "case_id": "AUR-CASE-001",
         "industry": "Manufacturing",
         "description": "MSME cotton fabric manufacturer in Surat with 5 operational power looms, 15 workers, and capacity of 10,000 m/month.",
         "data": ABC_TEXTILE_DATA,
@@ -338,7 +331,6 @@ SAMPLE_CASES = {
         "text_narrative": SAMPLE_TEXT_NARRATIVE,
     },
     "Sunrise Electronics Trading (Wholesale Distribution)": {
-        "case_id": "AUR-CASE-002",
         "industry": "Trading",
         "description": "Wholesale distributor of mobile phone accessories and fast chargers supplying retail electronics stores.",
         "data": SUNRISE_TRADING_DATA,
@@ -353,7 +345,6 @@ SAMPLE_CASES = {
         ),
     },
     "Apex Software Consulting (IT Services)": {
-        "case_id": "AUR-CASE-003",
         "industry": "Services",
         "description": "Custom enterprise software engineering firm with 8 software engineers and 1,200 sq ft office in IT park.",
         "data": APEX_SERVICES_DATA,
