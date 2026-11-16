@@ -311,6 +311,699 @@ Documentary and Physical Evidence:
 6. Electricity bill shows 4,500 units consumed (₹38,000).
 7. GST return for October 2026 shows declared turnover of ₹15 Lakhs."""
 
+SHREE_SPICES_DATA: Dict[str, Any] = {
+    "business_profile": {
+        "business_name": "Shree Spices & Masala Works",
+        "business_type": "manufacturing",
+        "industry": "food_processing",
+        "business_activity": "Spice grinding and retail packaging",
+        "business_age_years": 7,
+        "declared_monthly_turnover": 1200000,
+        "declared_monthly_production": 10000,
+        "declared_production_capacity": 14000,
+        "number_of_employees": 10,
+    },
+    "purchase_evidence": {
+        "bills": [
+            {
+                "supplier_name": "Karnataka Agro Traders",
+                "invoice_date": "2026-10-02",
+                "items": [
+                    {"item_name": "Whole Red Chilli", "quantity": 500, "unit": "kg", "unit_price": 120, "total_amount": 60000},
+                    {"item_name": "Coriander Seeds", "quantity": 400, "unit": "kg", "unit_price": 90, "total_amount": 36000},
+                ],
+                "total_amount": 96000,
+            },
+            {
+                "supplier_name": "Spice Hub Wholesale",
+                "invoice_date": "2026-10-10",
+                "items": [
+                    {"item_name": "Whole Red Chilli", "quantity": 300, "unit": "kg", "unit_price": 125, "total_amount": 37500},
+                ],
+                "total_amount": 37500,
+            },
+        ]
+    },
+    "inventory_evidence": {
+        "declared_inventory": [
+            {"item_name": "Whole Red Chilli", "quantity": 150, "unit": "kg", "estimated_value": 18750},
+            {"item_name": "Coriander Seeds", "quantity": 80, "unit": "kg", "estimated_value": 7200},
+            {"item_name": "Chilli Powder Packets (100g)", "quantity": 1200, "unit": "packets", "estimated_value": 96000},
+        ],
+        "image_analysis": [
+            {
+                "observed_objects": [
+                    {"object": "Spice storage sacks", "estimated_count": 18, "confidence": 0.87},
+                    {"object": "Labelled retail spice packets", "estimated_count": 1100, "confidence": 0.92},
+                ],
+                "observations": [
+                    "Raw spice sacks observed in storage area",
+                    "Finished labelled packets stacked on shelves",
+                    "Packaging material (pouches, labels) visible",
+                ],
+                "analysis_confidence": 0.88,
+            }
+        ],
+    },
+    "production_evidence": {
+        "production_records": [
+            {"date": "2026-10-31", "product": "Chilli Powder Packets", "quantity": 6000, "unit": "packets"},
+            {"date": "2026-10-31", "product": "Coriander Powder Packets", "quantity": 4000, "unit": "packets"},
+        ],
+        "raw_material_consumption": [
+            {"material": "Whole Red Chilli", "quantity": 650, "unit": "kg"},
+            {"material": "Coriander Seeds", "quantity": 420, "unit": "kg"},
+        ],
+        "finished_goods": [
+            {"product": "Chilli Powder Packets (100g)", "quantity": 6000, "unit": "packets"},
+            {"product": "Coriander Powder Packets (100g)", "quantity": 4000, "unit": "packets"},
+        ],
+    },
+    "sales_evidence": {
+        "sales_bills": [
+            {"customer_name": "Metro Grocery Chain", "invoice_date": "2026-10-22", "total_amount": 480000},
+            {"customer_name": "Local Kirana Network", "invoice_date": "2026-10-28", "total_amount": 320000},
+        ],
+        "customer_details": [
+            {"customer_name": "Metro Grocery Chain", "relationship": "Retail Chain"},
+            {"customer_name": "Local Kirana Network", "relationship": "Wholesale Distributor"},
+        ],
+        "sales_summary": {"total_sales_value": 800000, "period": "2026-10"},
+    },
+    "physical_evidence": {
+        "video_analysis": [
+            {
+                "duration_seconds": 90,
+                "observed_activities": ["Workers feeding raw spices into grinder", "Packet sealing machine in operation"],
+                "observed_machinery": ["Industrial spice grinder", "Automatic packet sealing machine"],
+                "observations": ["Active food processing visible", "Hygiene standards appear maintained"],
+                "analysis_confidence": 0.86,
+            }
+        ],
+        "machinery_analysis": [
+            {"machine_name": "Industrial Spice Grinder", "observed_count": 2, "condition": "Operational"},
+            {"machine_name": "Packet Sealing Machine", "observed_count": 1, "condition": "Operational"},
+        ],
+        "premises_analysis": [
+            {"area": "Processing floor", "observation": "Grinding and packaging operations active"},
+            {"area": "Storage room", "observation": "Raw spice sacks and finished goods stacked separately"},
+        ],
+    },
+    "financial_evidence": {
+        "bank_transactions": [
+            {"transaction_date": "2026-10-23", "transaction_type": "credit", "amount": 480000, "description": "Metro Grocery payment"},
+            {"transaction_date": "2026-10-29", "transaction_type": "credit", "amount": 300000, "description": "Kirana Network partial payment"},
+        ],
+        "electricity_bills": [{"billing_month": "2026-10", "units_consumed": 3200, "bill_amount": 27000}],
+        "gst_records": [{"period": "2026-10", "declared_turnover": 1200000}],
+    },
+    "additional_evidence": {
+        "documents": [{"name": "FSSAI License"}, {"name": "Spice Board Registration"}],
+        "observations": [
+            "Business claims monthly capacity of 14,000 packets",
+            "No cold storage required for dry spices",
+        ],
+    },
+}
+
+LIFECARE_DIAGNOSTICS_DATA: Dict[str, Any] = {
+    "business_profile": {
+        "business_name": "LifeCare Diagnostics Centre",
+        "business_type": "service",
+        "industry": "healthcare",
+        "business_activity": "Medical diagnostics and pathology",
+        "business_age_years": 4,
+        "declared_monthly_turnover": 1800000,
+        "number_of_employees": 6,
+    },
+    "purchase_evidence": {
+        "bills": [
+            {
+                "supplier_name": "MedSupply India Pvt Ltd",
+                "invoice_date": "2026-10-05",
+                "items": [
+                    {"item_name": "Blood Test Reagents", "quantity": 50, "unit": "kits", "unit_price": 3500, "total_amount": 175000},
+                    {"item_name": "Disposable Consumables", "quantity": 2000, "unit": "units", "unit_price": 15, "total_amount": 30000},
+                ],
+                "total_amount": 205000,
+            },
+            {
+                "supplier_name": "Radiology Supplies Co.",
+                "invoice_date": "2026-10-12",
+                "items": [
+                    {"item_name": "X-Ray Films & Chemicals", "quantity": 300, "unit": "sheets", "unit_price": 250, "total_amount": 75000},
+                ],
+                "total_amount": 75000,
+            },
+        ]
+    },
+    "inventory_evidence": {
+        "declared_inventory": [
+            {"item_name": "Blood Test Reagent Kits", "quantity": 12, "unit": "kits", "estimated_value": 42000},
+            {"item_name": "Disposable Syringes & Tubes", "quantity": 500, "unit": "units", "estimated_value": 7500},
+        ],
+        "image_analysis": [
+            {
+                "observed_objects": [
+                    {"object": "Reagent refrigerator", "estimated_count": 2, "confidence": 0.93},
+                    {"object": "Consumable storage racks", "estimated_count": 3, "confidence": 0.89},
+                ],
+                "observations": ["Refrigerated reagent storage visible", "Labelled consumable racks organized"],
+                "analysis_confidence": 0.90,
+            }
+        ],
+    },
+    "production_evidence": {
+        "production_records": [
+            {"date": "2026-10-31", "product": "Blood Tests Conducted", "quantity": 1800, "unit": "tests"},
+            {"date": "2026-10-31", "product": "Radiology Scans", "quantity": 600, "unit": "scans"},
+            {"date": "2026-10-31", "product": "Health Packages", "quantity": 400, "unit": "packages"},
+        ],
+        "raw_material_consumption": [
+            {"material": "Reagent Kits", "quantity": 38, "unit": "kits"},
+            {"material": "Disposable Consumables", "quantity": 1500, "unit": "units"},
+        ],
+        "finished_goods": [],
+    },
+    "sales_evidence": {
+        "sales_bills": [
+            {"customer_name": "TechCorp Employee Health Plan", "invoice_date": "2026-10-25", "total_amount": 540000},
+            {"customer_name": "City Bank Corporate Wellness", "invoice_date": "2026-10-28", "total_amount": 360000},
+            {"customer_name": "Walk-in Cash Patients", "invoice_date": "2026-10-31", "total_amount": 450000},
+        ],
+        "customer_details": [
+            {"customer_name": "TechCorp Employee Health Plan", "relationship": "Corporate Client"},
+            {"customer_name": "City Bank Corporate Wellness", "relationship": "Corporate Client"},
+            {"customer_name": "Walk-in Cash Patients", "relationship": "Retail Walk-in"},
+        ],
+        "sales_summary": {"total_sales_value": 1350000, "period": "2026-10"},
+    },
+    "physical_evidence": {
+        "video_analysis": [
+            {
+                "duration_seconds": 100,
+                "observed_activities": ["Phlebotomist collecting blood samples", "Receptionist registering patients"],
+                "observed_machinery": ["Automated haematology analyser", "X-Ray machine (active)", "MRI machine (powered off)"],
+                "observations": [
+                    "Lab actively processing samples",
+                    "MRI machine not operational during inspection",
+                    "Waiting area has 8 patients",
+                ],
+                "analysis_confidence": 0.87,
+            }
+        ],
+        "machinery_analysis": [
+            {"machine_name": "Automated Haematology Analyser", "observed_count": 1, "condition": "Operational"},
+            {"machine_name": "X-Ray Machine", "observed_count": 1, "condition": "Operational"},
+            {"machine_name": "MRI Machine", "observed_count": 1, "condition": "Powered Off / Unclear"},
+        ],
+        "premises_analysis": [
+            {"area": "Sample collection room", "observation": "Active blood collection in progress"},
+            {"area": "Radiology wing", "observation": "X-Ray operational; MRI room locked"},
+        ],
+    },
+    "financial_evidence": {
+        "bank_transactions": [
+            {"transaction_date": "2026-10-26", "transaction_type": "credit", "amount": 540000, "description": "TechCorp payment"},
+            {"transaction_date": "2026-10-29", "transaction_type": "credit", "amount": 360000, "description": "City Bank payment"},
+            {"transaction_date": "2026-10-31", "transaction_type": "credit", "amount": 150000, "description": "Walk-in cash deposit (partial)"},
+        ],
+        "electricity_bills": [{"billing_month": "2026-10", "units_consumed": 5800, "bill_amount": 48000}],
+        "gst_records": [{"period": "2026-10", "declared_turnover": 1800000}],
+    },
+    "additional_evidence": {
+        "documents": [{"name": "NABL Accreditation Certificate"}, {"name": "Clinical Establishment License"}],
+        "observations": [
+            "MRI machine reportedly under annual maintenance",
+            "Cash patients not always issued formal receipts",
+        ],
+    },
+}
+
+BUILDWELL_CONSTRUCTION_DATA: Dict[str, Any] = {
+    "business_profile": {
+        "business_name": "Buildwell Infrastructure Contractors",
+        "business_type": "service",
+        "industry": "construction",
+        "business_activity": "Civil construction and road works",
+        "business_age_years": 9,
+        "declared_monthly_turnover": 5000000,
+        "number_of_employees": 35,
+    },
+    "purchase_evidence": {
+        "bills": [
+            {
+                "supplier_name": "Bharat Cement Distributors",
+                "invoice_date": "2026-10-04",
+                "items": [{"item_name": "OPC Cement (50kg bags)", "quantity": 800, "unit": "bags", "unit_price": 380, "total_amount": 304000}],
+                "total_amount": 304000,
+            },
+            {
+                "supplier_name": "Steel Mart India",
+                "invoice_date": "2026-10-08",
+                "items": [{"item_name": "TMT Steel Bars (10mm)", "quantity": 5000, "unit": "kg", "unit_price": 65, "total_amount": 325000}],
+                "total_amount": 325000,
+            },
+            {
+                "supplier_name": "River Sand Traders",
+                "invoice_date": "2026-10-10",
+                "items": [{"item_name": "Coarse Sand", "quantity": 80, "unit": "cubic_meters", "unit_price": 1800, "total_amount": 144000}],
+                "total_amount": 144000,
+            },
+        ]
+    },
+    "inventory_evidence": {
+        "declared_inventory": [
+            {"item_name": "OPC Cement Bags", "quantity": 120, "unit": "bags", "estimated_value": 45600},
+            {"item_name": "TMT Steel Bars", "quantity": 800, "unit": "kg", "estimated_value": 52000},
+        ],
+        "image_analysis": [
+            {
+                "observed_objects": [
+                    {"object": "Cement bags stacked at site", "estimated_count": 100, "confidence": 0.90},
+                    {"object": "Steel bar bundles", "estimated_count": 8, "confidence": 0.88},
+                ],
+                "observations": [
+                    "Construction materials stored at active site",
+                    "Site 3 shows no material or worker presence",
+                ],
+                "analysis_confidence": 0.85,
+            }
+        ],
+    },
+    "production_evidence": {
+        "production_records": [
+            {"date": "2026-10-31", "product": "Residential Building (Site 1) — 2 floors completed", "quantity": 1, "unit": "milestone"},
+            {"date": "2026-10-31", "product": "Road Repair (Site 2) — 400m completed", "quantity": 400, "unit": "meters"},
+        ],
+        "raw_material_consumption": [
+            {"material": "OPC Cement", "quantity": 680, "unit": "bags"},
+            {"material": "TMT Steel Bars", "quantity": 4200, "unit": "kg"},
+            {"material": "Coarse Sand", "quantity": 72, "unit": "cubic_meters"},
+        ],
+        "finished_goods": [],
+    },
+    "sales_evidence": {
+        "sales_bills": [
+            {"customer_name": "Greenfield Developers Pvt Ltd", "invoice_date": "2026-10-20", "total_amount": 2000000},
+            {"customer_name": "Municipal Corporation Road Works", "invoice_date": "2026-10-24", "total_amount": 900000},
+            {"customer_name": "Sunrise Realty", "invoice_date": "2026-10-27", "total_amount": 600000},
+        ],
+        "customer_details": [
+            {"customer_name": "Greenfield Developers Pvt Ltd", "relationship": "Private Developer"},
+            {"customer_name": "Municipal Corporation Road Works", "relationship": "Government Client"},
+            {"customer_name": "Sunrise Realty", "relationship": "Private Developer"},
+        ],
+        "sales_summary": {"total_sales_value": 3500000, "period": "2026-10"},
+    },
+    "physical_evidence": {
+        "video_analysis": [
+            {
+                "duration_seconds": 150,
+                "observed_activities": ["Concrete pouring at Site 1", "Road levelling at Site 2", "Workers laying bricks"],
+                "observed_machinery": ["JCB excavator", "Concrete mixer", "Road roller"],
+                "observations": [
+                    "Sites 1 and 2 actively operational",
+                    "Site 3 — no activity or workers observed",
+                ],
+                "analysis_confidence": 0.84,
+            }
+        ],
+        "machinery_analysis": [
+            {"machine_name": "JCB Excavator", "observed_count": 1, "condition": "Operational"},
+            {"machine_name": "Concrete Mixer", "observed_count": 2, "condition": "Operational"},
+            {"machine_name": "Road Roller", "observed_count": 1, "condition": "Operational"},
+        ],
+        "premises_analysis": [
+            {"area": "Site 1 — Residential Building", "observation": "Active construction, 2 floors slab-cast"},
+            {"area": "Site 2 — Road Repair", "observation": "Road levelling machinery active"},
+            {"area": "Site 3 — Declared Commercial Project", "observation": "No activity, no workers, no materials present"},
+        ],
+    },
+    "financial_evidence": {
+        "bank_transactions": [
+            {"transaction_date": "2026-10-21", "transaction_type": "credit", "amount": 2000000, "description": "Greenfield Developers progress billing"},
+            {"transaction_date": "2026-10-25", "transaction_type": "credit", "amount": 900000, "description": "Municipal Corporation payment"},
+            {"transaction_date": "2026-10-28", "transaction_type": "credit", "amount": 300000, "description": "Sunrise Realty partial payment"},
+        ],
+        "electricity_bills": [{"billing_month": "2026-10", "units_consumed": 2100, "bill_amount": 18000}],
+        "gst_records": [{"period": "2026-10", "declared_turnover": 5000000}],
+    },
+    "additional_evidence": {
+        "documents": [{"name": "PWD Contractor License Class B"}, {"name": "ESI & PF Registration"}],
+        "observations": [
+            "Labour payments made in cash — ₹8 Lakhs to sub-contractors, no TDS deducted",
+            "Site 3 contract reportedly delayed by client",
+        ],
+    },
+}
+
+PRAKASH_RETAIL_DATA: Dict[str, Any] = {
+    "business_profile": {
+        "business_name": "Prakash General Stores",
+        "business_type": "trading",
+        "industry": "retail",
+        "business_activity": "Kirana and FMCG retail",
+        "business_age_years": 12,
+        "declared_monthly_turnover": 800000,
+        "number_of_employees": 3,
+    },
+    "purchase_evidence": {
+        "bills": [
+            {
+                "supplier_name": "HUL Distributor — Raj Enterprises",
+                "invoice_date": "2026-10-03",
+                "items": [
+                    {"item_name": "Surf Excel (1kg)", "quantity": 200, "unit": "units", "unit_price": 110, "total_amount": 22000},
+                    {"item_name": "Lux Soap Bar", "quantity": 500, "unit": "units", "unit_price": 35, "total_amount": 17500},
+                ],
+                "total_amount": 39500,
+            },
+            {
+                "supplier_name": "Britannia Foods Distributor",
+                "invoice_date": "2026-10-10",
+                "items": [
+                    {"item_name": "Good Day Biscuits (200g)", "quantity": 600, "unit": "units", "unit_price": 20, "total_amount": 12000},
+                    {"item_name": "Marie Gold Biscuits (200g)", "quantity": 400, "unit": "units", "unit_price": 18, "total_amount": 7200},
+                ],
+                "total_amount": 19200,
+            },
+            {
+                "supplier_name": "Wholesale Grocery Market",
+                "invoice_date": "2026-10-15",
+                "items": [
+                    {"item_name": "Basmati Rice (25kg bags)", "quantity": 40, "unit": "bags", "unit_price": 1600, "total_amount": 64000},
+                    {"item_name": "Refined Sunflower Oil (1L)", "quantity": 300, "unit": "units", "unit_price": 130, "total_amount": 39000},
+                ],
+                "total_amount": 103000,
+            },
+        ]
+    },
+    "inventory_evidence": {
+        "declared_inventory": [
+            {"item_name": "FMCG Mixed Stock", "quantity": 1, "unit": "lot", "estimated_value": 85000},
+            {"item_name": "Basmati Rice (25kg bags)", "quantity": 8, "unit": "bags", "estimated_value": 12800},
+        ],
+        "image_analysis": [
+            {
+                "observed_objects": [
+                    {"object": "FMCG product shelves", "estimated_count": 6, "confidence": 0.95},
+                    {"object": "Rice and grain sacks", "estimated_count": 10, "confidence": 0.91},
+                ],
+                "observations": [
+                    "Well-stocked FMCG shelves observed",
+                    "Cold storage counter for dairy visible",
+                    "POS billing machine present at counter",
+                ],
+                "analysis_confidence": 0.92,
+            }
+        ],
+    },
+    "production_evidence": {
+        "production_records": [],
+        "raw_material_consumption": [],
+        "finished_goods": [],
+    },
+    "sales_evidence": {
+        "sales_bills": [],
+        "customer_details": [{"customer_name": "Walk-in Retail Customers", "relationship": "Cash Retail"}],
+        "sales_summary": {
+            "total_sales_value": 800000,
+            "period": "2026-10",
+            "note": "All cash sales — no formal invoices maintained",
+        },
+    },
+    "physical_evidence": {
+        "video_analysis": [
+            {
+                "duration_seconds": 60,
+                "observed_activities": ["Cashier billing customer at POS", "Owner restocking shelves"],
+                "observed_machinery": ["POS billing machine", "Cold storage counter"],
+                "observations": ["Active retail operation confirmed", "No daily Z-report binder visible at counter"],
+                "analysis_confidence": 0.89,
+            }
+        ],
+        "machinery_analysis": [
+            {"machine_name": "POS Billing Machine", "observed_count": 1, "condition": "Operational"},
+            {"machine_name": "Cold Storage Counter", "observed_count": 1, "condition": "Operational"},
+        ],
+        "premises_analysis": [
+            {"area": "Retail floor", "observation": "Fully stocked shelves, active customers"},
+            {"area": "Storage room", "observation": "Back stock of FMCG and grain observed"},
+        ],
+    },
+    "financial_evidence": {
+        "bank_transactions": [
+            {"transaction_date": "2026-10-07", "transaction_type": "credit", "amount": 100000, "description": "Cash deposit"},
+            {"transaction_date": "2026-10-14", "transaction_type": "credit", "amount": 100000, "description": "Cash deposit"},
+            {"transaction_date": "2026-10-21", "transaction_type": "credit", "amount": 100000, "description": "Cash deposit"},
+            {"transaction_date": "2026-10-28", "transaction_type": "credit", "amount": 150000, "description": "Cash deposit"},
+        ],
+        "electricity_bills": [{"billing_month": "2026-10", "units_consumed": 900, "bill_amount": 7500}],
+        "gst_records": [{"period": "2026-10", "declared_turnover": 800000}],
+    },
+    "additional_evidence": {
+        "documents": [{"name": "Shop & Establishment License"}, {"name": "GST Registration"}],
+        "observations": [
+            "No formal sales invoices issued to retail customers",
+            "Cash sales dominant — POS Z-reports not archived",
+        ],
+    },
+}
+
+GREEN_VALLEY_FARM_DATA: Dict[str, Any] = {
+    "business_profile": {
+        "business_name": "Green Valley Agro Farm",
+        "business_type": "agriculture",
+        "industry": "agriculture",
+        "business_activity": "Seasonal vegetable farming for wholesale",
+        "business_age_years": 15,
+        "declared_monthly_turnover": None,
+        "declared_seasonal_turnover": 2500000,
+        "declared_production_capacity": 120000,
+        "number_of_employees": 8,
+    },
+    "purchase_evidence": {
+        "bills": [
+            {
+                "supplier_name": "Agri Inputs Pvt Ltd",
+                "invoice_date": "2026-07-01",
+                "items": [
+                    {"item_name": "Hybrid Tomato Seeds", "quantity": 5, "unit": "kg", "unit_price": 8000, "total_amount": 40000},
+                    {"item_name": "NPK Fertiliser (50kg bags)", "quantity": 60, "unit": "bags", "unit_price": 1200, "total_amount": 72000},
+                ],
+                "total_amount": 112000,
+            },
+            {
+                "supplier_name": "Pesticide Distributors Co.",
+                "invoice_date": "2026-08-10",
+                "items": [
+                    {"item_name": "Pesticide Spray (1L bottles)", "quantity": 80, "unit": "litres", "unit_price": 1500, "total_amount": 120000},
+                ],
+                "total_amount": 120000,
+            },
+        ]
+    },
+    "inventory_evidence": {
+        "declared_inventory": [
+            {"item_name": "Harvested Tomatoes", "quantity": 8000, "unit": "kg", "estimated_value": 160000},
+            {"item_name": "Onions (stored)", "quantity": 5000, "unit": "kg", "estimated_value": 75000},
+        ],
+        "image_analysis": [
+            {
+                "observed_objects": [
+                    {"object": "Tomato crop rows", "estimated_count": 12, "confidence": 0.88},
+                    {"object": "Onion storage sacks", "estimated_count": 60, "confidence": 0.85},
+                ],
+                "observations": [
+                    "12 acres of active tomato crop observed via drone imagery",
+                    "3 acres appear fallow — no active crop",
+                    "Onion storage in shed confirmed",
+                ],
+                "analysis_confidence": 0.83,
+            }
+        ],
+    },
+    "production_evidence": {
+        "production_records": [
+            {"date": "2026-10-15", "product": "Tomatoes", "quantity": 72000, "unit": "kg"},
+            {"date": "2026-10-15", "product": "Onions", "quantity": 30000, "unit": "kg"},
+            {"date": "2026-10-15", "product": "Potatoes", "quantity": 18000, "unit": "kg"},
+        ],
+        "raw_material_consumption": [
+            {"material": "Hybrid Tomato Seeds", "quantity": 5, "unit": "kg"},
+            {"material": "NPK Fertiliser", "quantity": 58, "unit": "bags"},
+            {"material": "Pesticide Spray", "quantity": 75, "unit": "litres"},
+        ],
+        "finished_goods": [
+            {"product": "Tomatoes (wholesale)", "quantity": 72000, "unit": "kg"},
+            {"product": "Onions (wholesale)", "quantity": 30000, "unit": "kg"},
+        ],
+    },
+    "sales_evidence": {
+        "sales_bills": [
+            {"customer_name": "APMC Mandi — Nashik", "invoice_date": "2026-10-20", "total_amount": 1200000},
+            {"customer_name": "Hotel Wholesale Buyer", "invoice_date": "2026-10-25", "total_amount": 600000},
+        ],
+        "customer_details": [
+            {"customer_name": "APMC Mandi — Nashik", "relationship": "Agricultural Mandi"},
+            {"customer_name": "Hotel Wholesale Buyer", "relationship": "Institutional Buyer"},
+        ],
+        "sales_summary": {"total_sales_value": 1800000, "period": "2026 Kharif Season"},
+    },
+    "physical_evidence": {
+        "video_analysis": [
+            {
+                "duration_seconds": 180,
+                "observed_activities": ["Harvesting of tomatoes in progress", "Labourers loading crates onto truck"],
+                "observed_machinery": ["Irrigation pump", "Tractor with trailer"],
+                "observations": [
+                    "Active harvesting on 12 acres confirmed",
+                    "3 acres appear fallow — no crop or workers",
+                ],
+                "analysis_confidence": 0.82,
+            }
+        ],
+        "machinery_analysis": [
+            {"machine_name": "Irrigation Pump", "observed_count": 2, "condition": "Operational"},
+            {"machine_name": "Tractor", "observed_count": 1, "condition": "Operational"},
+        ],
+        "premises_analysis": [
+            {"area": "Tomato fields (12 acres)", "observation": "Active crop, harvesting in progress"},
+            {"area": "3 acres north section", "observation": "Fallow land — no crop visible"},
+            {"area": "Storage shed", "observation": "Onion sacks and crates stored"},
+        ],
+    },
+    "financial_evidence": {
+        "bank_transactions": [
+            {"transaction_date": "2026-10-21", "transaction_type": "credit", "amount": 1200000, "description": "APMC Mandi payment"},
+            {"transaction_date": "2026-10-26", "transaction_type": "credit", "amount": 600000, "description": "Hotel Wholesale Buyer payment"},
+        ],
+        "electricity_bills": [{"billing_month": "2026-10", "units_consumed": 6000, "bill_amount": 50000}],
+        "gst_records": [{"period": "2026 Kharif", "declared_turnover": 2500000, "note": "Agriculture partially GST-exempt"}],
+    },
+    "additional_evidence": {
+        "documents": [{"name": "Land ownership / 7-12 extract (15 acres)"}, {"name": "PM-KISAN beneficiary registration"}],
+        "observations": [
+            "Farm gate cash sales to local vendors estimated ₹7 Lakhs — not formally documented",
+            "3 fallow acres may indicate declared acreage inflation",
+        ],
+    },
+}
+
+ROYAL_COMFORT_HOTEL_DATA: Dict[str, Any] = {
+    "business_profile": {
+        "business_name": "Royal Comfort Guest House",
+        "business_type": "service",
+        "industry": "hospitality",
+        "business_activity": "Hotel lodging and restaurant services",
+        "business_age_years": 6,
+        "declared_monthly_turnover": 1200000,
+        "number_of_employees": 18,
+    },
+    "purchase_evidence": {
+        "bills": [
+            {
+                "supplier_name": "FreshMart Food Supplies",
+                "invoice_date": "2026-10-05",
+                "items": [
+                    {"item_name": "Vegetables & Groceries", "quantity": 1, "unit": "lot", "unit_price": 55000, "total_amount": 55000},
+                    {"item_name": "Chicken & Meat", "quantity": 200, "unit": "kg", "unit_price": 250, "total_amount": 50000},
+                ],
+                "total_amount": 105000,
+            },
+            {
+                "supplier_name": "Hotel Linen Supplies Co.",
+                "invoice_date": "2026-10-01",
+                "items": [{"item_name": "Bed Linen Set", "quantity": 20, "unit": "sets", "unit_price": 800, "total_amount": 16000}],
+                "total_amount": 16000,
+            },
+        ]
+    },
+    "inventory_evidence": {
+        "declared_inventory": [
+            {"item_name": "F&B Raw Materials", "quantity": 1, "unit": "lot", "estimated_value": 25000},
+            {"item_name": "Housekeeping Supplies", "quantity": 1, "unit": "lot", "estimated_value": 8000},
+        ],
+        "image_analysis": [
+            {
+                "observed_objects": [
+                    {"object": "Hotel rooms (doors)", "estimated_count": 20, "confidence": 0.97},
+                    {"object": "Restaurant kitchen equipment", "estimated_count": 5, "confidence": 0.91},
+                ],
+                "observations": [
+                    "All 20 room doors visible across 2 floors",
+                    "Restaurant kitchen with commercial gas range and refrigeration",
+                    "Reception desk with booking register",
+                ],
+                "analysis_confidence": 0.93,
+            }
+        ],
+    },
+    "production_evidence": {
+        "production_records": [
+            {"date": "2026-10-31", "product": "Room Nights Occupied", "quantity": 320, "unit": "room-nights"},
+            {"date": "2026-10-31", "product": "Restaurant Meals Served", "quantity": 2400, "unit": "covers"},
+        ],
+        "raw_material_consumption": [{"material": "F&B Ingredients", "quantity": 1, "unit": "lot"}],
+        "finished_goods": [],
+    },
+    "sales_evidence": {
+        "sales_bills": [
+            {"customer_name": "MakeMyTrip Bookings (OTA)", "invoice_date": "2026-10-31", "total_amount": 300000},
+            {"customer_name": "Booking.com Settlements", "invoice_date": "2026-10-31", "total_amount": 150000},
+            {"customer_name": "Walk-in Room Cash Guests", "invoice_date": "2026-10-31", "total_amount": 300000},
+        ],
+        "customer_details": [
+            {"customer_name": "MakeMyTrip Bookings", "relationship": "Online Travel Agent"},
+            {"customer_name": "Booking.com", "relationship": "Online Travel Agent"},
+            {"customer_name": "Walk-in Room Cash Guests", "relationship": "Direct Walk-in"},
+        ],
+        "sales_summary": {
+            "total_sales_value": 750000,
+            "period": "2026-10",
+            "note": "Restaurant cash revenue ~₹200,000 not separately billed",
+        },
+    },
+    "physical_evidence": {
+        "video_analysis": [
+            {
+                "duration_seconds": 120,
+                "observed_activities": ["Receptionist checking in guest", "Kitchen staff cooking", "Housekeeping cleaning room"],
+                "observed_machinery": ["Commercial gas range", "Industrial refrigerator", "Laundry machine", "CCTV system"],
+                "observations": ["Hotel fully operational", "14 rooms shown occupied", "Restaurant lunch service active"],
+                "analysis_confidence": 0.91,
+            }
+        ],
+        "machinery_analysis": [
+            {"machine_name": "Commercial Gas Range", "observed_count": 2, "condition": "Operational"},
+            {"machine_name": "Industrial Refrigerator", "observed_count": 3, "condition": "Operational"},
+            {"machine_name": "Laundry Machine", "observed_count": 1, "condition": "Operational"},
+        ],
+        "premises_analysis": [
+            {"area": "Hotel floors (20 rooms)", "observation": "All 20 rooms verified; 14 occupied during inspection"},
+            {"area": "Restaurant (ground floor)", "observation": "Active lunch service, 12 diners present"},
+            {"area": "Reception", "observation": "Booking register shows 320 room-nights for October"},
+        ],
+    },
+    "financial_evidence": {
+        "bank_transactions": [
+            {"transaction_date": "2026-10-31", "transaction_type": "credit", "amount": 300000, "description": "MakeMyTrip OTA settlement"},
+            {"transaction_date": "2026-10-31", "transaction_type": "credit", "amount": 150000, "description": "Booking.com OTA settlement"},
+            {"transaction_date": "2026-10-15", "transaction_type": "credit", "amount": 100000, "description": "Walk-in cash deposit (partial)"},
+        ],
+        "electricity_bills": [{"billing_month": "2026-10", "units_consumed": 8500, "bill_amount": 71000}],
+        "gst_records": [{"period": "2026-10", "declared_turnover": 1200000}],
+    },
+    "additional_evidence": {
+        "documents": [{"name": "Hotel License — Municipal Corporation"}, {"name": "FSSAI License (Restaurant)"}, {"name": "Fire Safety NOC"}],
+        "observations": [
+            "Walk-in room cash and restaurant cash revenue not fully deposited",
+            "OTA commissions (15%) deducted before settlement — net credits lower than gross billings",
+        ],
+    },
+}
+
 SAMPLE_CASES = {
     "ABC Textile Industries (Manufacturing - Standard Test Case)": {
         "industry": "Manufacturing",
@@ -344,6 +1037,84 @@ SAMPLE_CASES = {
             "Active client retainers: FinCorp Inc (₹6.6 Lakhs) and HealthCare Solutions Ltd (₹2.5 Lakhs), totaling ₹9.1 Lakhs. "
             "Bank statements show matching credits of ₹9.1 Lakhs. "
             "Office lease shows 1,200 sq ft rented space with 8 active developer workstations."
+        ),
+    },
+    "Shree Spices & Masala Works (Food Processing)": {
+        "industry": "Food Processing",
+        "description": "MSME spice grinding and packaging unit with 2 industrial grinders — raw spice gap and turnover discrepancy.",
+        "data": SHREE_SPICES_DATA,
+        "json_str": json.dumps(SHREE_SPICES_DATA, indent=2),
+        "text_narrative": (
+            "Shree Spices & Masala Works grinds whole spices and packages them into 100g retail pouches. "
+            "Declared monthly turnover ₹12 Lakhs; documented sales invoices total ₹8 Lakhs. "
+            "Purchases of 800 kg chilli and 400 kg coriander documented; declared consumption is 1,070 kg — gap of ~270 kg unaccounted. "
+            "Bank credits of ₹7.8 Lakhs closely match documented sales. "
+            "Electricity (3,200 units) consistent with grinding machine usage."
+        ),
+    },
+    "LifeCare Diagnostics Centre (Healthcare)": {
+        "industry": "Healthcare",
+        "description": "Standalone diagnostic lab — MRI powered off during inspection, cash walk-in leakage, reagent-to-test volume mismatch.",
+        "data": LIFECARE_DIAGNOSTICS_DATA,
+        "json_str": json.dumps(LIFECARE_DIAGNOSTICS_DATA, indent=2),
+        "text_narrative": (
+            "LifeCare Diagnostics offers blood tests, radiology, and health packages. "
+            "Declared monthly revenue ₹18 Lakhs; documented billing ₹13.5 Lakhs — 25% gap. "
+            "Corporate clients (₹9 Lakhs) match bank credits; walk-in cash (₹4.5 Lakhs) only ₹1.5 Lakhs deposited. "
+            "MRI machine observed powered off during inspection despite being listed as operational. "
+            "Reagent purchases support ~2,800 tests; declared test volume is 4,500."
+        ),
+    },
+    "Buildwell Infrastructure Contractors (Construction)": {
+        "industry": "Construction",
+        "description": "Civil contractor with 3 declared project sites — Site 3 inactive, cash labour payments with no TDS, billing shortfall.",
+        "data": BUILDWELL_CONSTRUCTION_DATA,
+        "json_str": json.dumps(BUILDWELL_CONSTRUCTION_DATA, indent=2),
+        "text_narrative": (
+            "Buildwell Infrastructure Contractors undertakes residential construction and road repair works. "
+            "Declared monthly turnover ₹50 Lakhs; project billing totals ₹35 Lakhs — 30% gap. "
+            "Sites 1 and 2 confirmed active via video inspection; Site 3 shows no activity, workers, or materials. "
+            "Labour contractor payments of ₹8 Lakhs in cash with no TDS deducted — compliance risk. "
+            "Bank credits ₹32 Lakhs vs invoiced ₹35 Lakhs — ₹3 Lakhs difference unexplained."
+        ),
+    },
+    "Prakash General Stores (Retail — Kirana)": {
+        "industry": "Retail",
+        "description": "All-cash neighbourhood kirana store — no sales invoices, partial bank deposits, POS Z-reports absent.",
+        "data": PRAKASH_RETAIL_DATA,
+        "json_str": json.dumps(PRAKASH_RETAIL_DATA, indent=2),
+        "text_narrative": (
+            "Prakash General Stores is a 12-year-old kirana selling FMCG, groceries, and dairy products. "
+            "Declared monthly turnover ₹8 Lakhs; all sales are cash walk-in with no formal invoices. "
+            "FMCG purchases from 3 distributors total ₹1.6 Lakhs implying ~₹5.5 Lakhs sales at typical margins. "
+            "Bank deposits total ₹4.5 Lakhs — only 56% of declared turnover. "
+            "POS machine present but daily Z-reports not maintained."
+        ),
+    },
+    "Green Valley Agro Farm (Agriculture)": {
+        "industry": "Agriculture",
+        "description": "15-acre vegetable farm — 3 fallow acres, yield inflation, undocumented farm gate cash sales.",
+        "data": GREEN_VALLEY_FARM_DATA,
+        "json_str": json.dumps(GREEN_VALLEY_FARM_DATA, indent=2),
+        "text_narrative": (
+            "Green Valley Agro Farm cultivates tomatoes, onions, and potatoes on 15 acres for wholesale mandis. "
+            "Declared seasonal turnover ₹25 Lakhs; mandi receipts ₹18 Lakhs — ₹7 Lakhs in cash farm gate sales undocumented. "
+            "Drone imagery confirms crop on 12 acres only; 3 acres appear fallow. "
+            "Declared yield of 120 tonnes vs benchmark of 6–8 tonnes/acre for 15 acres (90–120 tonnes) — upper bound plausible but marginal. "
+            "Input costs (₹2.3 Lakhs documented) below expert estimate of ₹5–6 Lakhs for declared acreage."
+        ),
+    },
+    "Royal Comfort Guest House (Hospitality)": {
+        "industry": "Hospitality",
+        "description": "20-room budget hotel — OTA vs walk-in cash gap, partial deposits, occupancy register cross-check.",
+        "data": ROYAL_COMFORT_HOTEL_DATA,
+        "json_str": json.dumps(ROYAL_COMFORT_HOTEL_DATA, indent=2),
+        "text_narrative": (
+            "Royal Comfort Guest House operates 20 rooms and a restaurant in a tier-2 city. "
+            "Declared monthly revenue ₹12 Lakhs (rooms ₹8L + restaurant ₹4L); documented billing ₹7.5 Lakhs — 37.5% gap. "
+            "OTA settlements (MakeMyTrip ₹3L, Booking.com ₹1.5L) match bank credits; walk-in cash ₹3L — only ₹1L deposited. "
+            "Occupancy register shows 320 room-nights vs 20 rooms × 30 days × 60% = 360 — minor shortfall. "
+            "All 20 rooms confirmed physical; 14 occupied during inspection."
         ),
     },
 }

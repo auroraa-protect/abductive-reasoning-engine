@@ -32,7 +32,7 @@ async def get_groq_completion(
     system_prompt: str,
     user_message: str,
     response_format: Optional[str] = "text",
-    max_tokens: int = 2000,
+    max_tokens: int = 4000,
     temperature: float = 0.0,
 ) -> str:
     """

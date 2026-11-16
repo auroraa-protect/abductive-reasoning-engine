@@ -8,34 +8,26 @@ from typing import Any, Dict, Optional
 
 import streamlit as st
 
-# Ensure both repository root and ui directory are present in sys.path
+# Keep the repository root ahead of imports; the UI directory contains app.py
+# and must not shadow the backend's app package.
 _ROOT = Path(__file__).resolve().parent.parent
 _UI_DIR = Path(__file__).resolve().parent
 
-for _p in (str(_ROOT), str(_UI_DIR)):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+for _p in (str(_UI_DIR), str(_ROOT)):
+    while _p in sys.path:
+        sys.path.remove(_p)
+sys.path.insert(0, str(_ROOT))
 
-try:
-    from ui.api_client import (
-        DEFAULT_BACKEND_URL,
-        check_health,
-        get_metrics,
-        normalize_url,
-        run_inference,
-    )
-    from ui.components import extract_file_content, render_report_markdown
-    from ui.sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
-except ImportError:
-    from api_client import (
-        DEFAULT_BACKEND_URL,
-        check_health,
-        get_metrics,
-        normalize_url,
-        run_inference,
-    )
-    from components import extract_file_content, render_report_markdown
-    from sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
+from ui.api_client import (
+    DEFAULT_BACKEND_URL,
+    check_health,
+    get_metrics,
+    normalize_url,
+    run_inference,
+)
+from ui.components import extract_file_content, render_report_markdown
+from ui.sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
+from app.schemas.request_schemas import ExplainRequest as _ExplainRequest
 
 
 # ---------------------------------------------------------------------------
@@ -505,6 +497,8 @@ input_mode = input_mode or "JSON input"
 uploaded_files = []
 file_extracted_texts = []
 file_json_candidate = None
+validate_json = False
+json_input = st.session_state.get("json_input", "")
 
 if input_mode == "JSON input":
     action_columns = st.columns(3)
@@ -532,14 +526,51 @@ if input_mode == "JSON input":
         placeholder='{\n  "business_profile": {}\n}',
     )
     if validate_json:
-        try:
-            parsed_json = json.loads(json_input)
-            if not isinstance(parsed_json, dict):
-                st.error("The JSON payload must be an object.")
-            else:
-                st.success("Valid JSON object.")
-        except json.JSONDecodeError as error:
-            st.error(f"Invalid JSON: {error}")
+        if not json_input.strip():
+            st.warning("Paste a JSON payload first before validating.")
+        else:
+            # Step 1 — JSON syntax check
+            try:
+                parsed_json = json.loads(json_input)
+            except json.JSONDecodeError as error:
+                st.error(f"❌ **Invalid JSON syntax:** {error}")
+                parsed_json = None
+
+            if parsed_json is not None:
+                if not isinstance(parsed_json, dict):
+                    st.error("❌ **The JSON payload must be a top-level object `{}`**, not a list or primitive.")
+                else:
+                    # Step 2 — Pydantic schema validation
+                    if _ExplainRequest is not None:
+                        try:
+                            from pydantic import ValidationError
+                            _ExplainRequest(**parsed_json)
+                            st.success(
+                                "✅ **Valid!** JSON is well-formed and passes full schema validation. "
+                                "It is ready to submit."
+                            )
+                        except ValidationError as ve:
+                            field_errors = ve.errors()
+                            st.error(
+                                f"❌ **Schema validation failed** — "
+                                f"{len(field_errors)} field error(s) found:"
+                            )
+                            for err in field_errors:
+                                loc = " → ".join(str(x) for x in err["loc"])
+                                msg = err["msg"]
+                                inp = err.get("input", "")
+                                inp_str = f" (got: `{repr(inp)[:80]}`)" if inp != "" else ""
+                                st.markdown(
+                                    f"- **`{loc}`**: {msg}{inp_str}"
+                                )
+                        except Exception as exc:
+                            st.warning(
+                                f"⚠️ JSON is syntactically valid but schema check raised: `{exc}`"
+                            )
+                    else:
+                        # Schema not importable — fall back to syntax-only check
+                        st.success("✅ **Valid JSON object.** (Schema validator not available — syntax check only.)")
+
 
 elif input_mode == "Text input":
     st.caption(

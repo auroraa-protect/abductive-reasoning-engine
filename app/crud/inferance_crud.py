@@ -253,7 +253,7 @@ def parse_report_sections(report_text: str) -> Tuple[Dict[str, str], Optional[st
         "ADDITIONAL INFORMATION REQUIRED",
         "OVERALL ASSESSMENT",
     ]
-    pattern = rf"({'|'.join(re.escape(h) for h in headers)})"
+    pattern = rf"(?:^|\n)\s*(?:[#*_\s-]*)\b({'|'.join(re.escape(h) for h in headers)})\b(?:[#*_\s-]*)(?:\n|$)"
     splits = re.split(pattern, report_text, flags=re.IGNORECASE)
 
     sections: Dict[str, str] = {}
@@ -269,13 +269,66 @@ def parse_report_sections(report_text: str) -> Tuple[Dict[str, str], Optional[st
         if not matched and clean_part:
             sections[current_header] = clean_part
 
+    # Fallback if regex split didn't find multiple sections: simple string split
+    if len(sections) <= 1:
+        simple_pattern = rf"({'|'.join(re.escape(h) for h in headers)})"
+        splits = re.split(simple_pattern, report_text, flags=re.IGNORECASE)
+        current_header = "INTRODUCTION"
+        for part in splits:
+            clean_part = part.strip()
+            matched = False
+            for h in headers:
+                if clean_part.upper() == h:
+                    current_header = h
+                    matched = True
+                    break
+            if not matched and clean_part:
+                sections[current_header] = clean_part
+
     # Extract overall assessment status
-    overall_text = sections.get("OVERALL ASSESSMENT", "")
     overall_status = None
-    for cand in ["INSUFFICIENT EVIDENCE", "PARTIAL MATCH", "MISMATCH", "MATCH"]:
-        if cand in overall_text.upper():
-            overall_status = cand
-            break
+
+    # 1. First look in OVERALL ASSESSMENT section if present
+    overall_text = sections.get("OVERALL ASSESSMENT", "")
+    if overall_text:
+        conclusion_match = re.search(r"Conclusion\s*[:\-]\s*([A-Za-z\s]+)", overall_text, flags=re.IGNORECASE)
+        if conclusion_match:
+            cand_text = conclusion_match.group(1).upper()
+            for cand in ["INSUFFICIENT EVIDENCE", "PARTIAL MATCH", "MISMATCH", "MATCH"]:
+                if cand in cand_text:
+                    overall_status = cand
+                    break
+
+        if not overall_status:
+            for cand in ["INSUFFICIENT EVIDENCE", "PARTIAL MATCH", "MISMATCH", "MATCH"]:
+                if cand in overall_text.upper():
+                    overall_status = cand
+                    break
+
+    # 2. Look anywhere in report_text for "Conclusion: <STATUS>" or "Overall Assessment: <STATUS>"
+    if not overall_status:
+        m = re.search(
+            r"(?:Conclusion|Overall Assessment)\s*[:\-]\s*(INSUFFICIENT EVIDENCE|PARTIAL MATCH|MISMATCH|MATCH)\b",
+            report_text,
+            flags=re.IGNORECASE,
+        )
+        if m:
+            overall_status = m.group(1).upper().strip()
+
+    # 3. Fallback: If report was truncated before section 5, infer from EVIDENCE MATCHING table
+    if not overall_status:
+        ev_text = sections.get("EVIDENCE MATCHING", report_text)
+        statuses = re.findall(r"\b(MISMATCH|PARTIAL MATCH|INSUFFICIENT EVIDENCE|MATCH)\b", ev_text, flags=re.IGNORECASE)
+        if statuses:
+            statuses_upper = [s.upper() for s in statuses]
+            if "MISMATCH" in statuses_upper:
+                overall_status = "MISMATCH"
+            elif "PARTIAL MATCH" in statuses_upper:
+                overall_status = "PARTIAL MATCH"
+            elif "INSUFFICIENT EVIDENCE" in statuses_upper:
+                overall_status = "INSUFFICIENT EVIDENCE"
+            elif "MATCH" in statuses_upper:
+                overall_status = "MATCH"
 
     return sections, overall_status
 
@@ -302,7 +355,7 @@ async def generate(request: ExplainRequest) -> ExplainResponse:
         system_prompt=system_prompt,
         user_message=user_message,
         response_format="text",
-        max_tokens=2000,
+        max_tokens=4000,
         temperature=0.0,
     )
     latency_ms = round((time.perf_counter() - t_start) * 1000)
