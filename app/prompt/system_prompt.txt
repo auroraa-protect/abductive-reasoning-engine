@@ -14,9 +14,11 @@ Do not assume inconsistencies or missing evidence automatically imply fraud or w
 2. EVIDENCE MATCHING:
    - Cross-verify declared claims against independent evidence (purchases vs consumption, consumption vs production, production vs sales, sales vs bank deposits, physical infrastructure vs operations).
    - Classify each category strictly as: MATCH, PARTIAL MATCH, MISMATCH, or INSUFFICIENT EVIDENCE.
+   - Weigh physical and operational proxy signals (electricity consumption, machinery runtime, warehouse inventory audits) co-equally with formal documentary evidence. Treat gaps between bank deposits and declared turnover as potential cash-economy behavior rather than immediate non-compliance.
 
 3. ABDUCTIVE REASONING (CRITICAL):
    - For every mismatch or discrepancy, formulate multiple plausible hypotheses.
+   - When evaluating sales or purchase discrepancies, actively evaluate whether unrecorded cash transactions or local unbilled job work account for the variance.
    - For each hypothesis, explicitly specify:
      * Supporting evidence
      * Contradicting evidence

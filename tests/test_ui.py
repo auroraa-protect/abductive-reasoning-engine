@@ -63,6 +63,32 @@ def test_api_client_offline_handling():
     assert "Connection failed" in res["error"] or "Unable to connect" in res["error"]
 
 
+def test_inference_history_loads_and_refreshes_from_metrics_endpoint():
+    history = [{"timestamp": "2026-11-16 09:00:00", "total_tokens": 42}]
+    with (
+        patch(
+            "ui.api_client.check_health",
+            return_value={"ok": True, "status": "healthy"},
+        ),
+        patch(
+            "ui.api_client.get_metrics",
+            return_value={"ok": True, "metrics": {"call_history": history}},
+        ) as metrics,
+    ):
+        app = AppTest.from_file("../ui/app.py").run()
+
+        assert not app.exception
+        assert app.session_state["history_entries"] == history
+        metrics.assert_called_once_with("http://localhost:8000")
+
+        app.session_state["backend_url"] = "http://127.0.0.1:8000"
+        app.run()
+        metrics.assert_called_with("http://127.0.0.1:8000")
+
+        app.button(key="refresh_history").click().run()
+        assert metrics.call_count == 3
+
+
 def test_report_markdown_removes_orphan_bold_markers_only():
     report = "**\n\n**Verified** operations.\n\n**"
     assert clean_report_markdown(report) == "**Verified** operations."
@@ -95,6 +121,10 @@ def test_text_input_collects_categorized_business_evidence():
         patch(
             "ui.api_client.check_health",
             return_value={"ok": False, "error": "Backend unavailable"},
+        ),
+        patch(
+            "ui.api_client.get_metrics",
+            return_value={"ok": True, "metrics": {"call_history": []}},
         ),
         patch(
             "ui.api_client.run_inference",

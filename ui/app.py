@@ -480,6 +480,8 @@ for key, default_value in TEXT_INPUT_DEFAULTS.items():
 st.session_state.setdefault("file_notes", "")
 st.session_state.setdefault("upload_generation", 0)
 st.session_state.setdefault("history_entries", None)
+st.session_state.setdefault("history_backend_url", None)
+st.session_state.setdefault("history_error", None)
 st.session_state.setdefault(
     "backend_url",
     os.getenv("AURORAA_BACKEND_URL")
@@ -534,18 +536,40 @@ with st.sidebar:
     st.caption(f"Current provider: {provider}")
 
     with st.expander("Inference history"):
-        if st.button("Refresh history", key="refresh_history"):
+        refresh_history = st.button("Refresh history", key="refresh_history")
+        if (
+            refresh_history
+            or st.session_state.history_backend_url != backend_url
+        ):
             metrics_result = get_metrics(backend_url)
             if metrics_result.get("ok"):
-                st.session_state.history_entries = metrics_result.get(
-                    "metrics", {}
-                ).get("call_history", [])
+                metrics = metrics_result.get("metrics")
+                history = (
+                    metrics.get("call_history")
+                    if isinstance(metrics, dict)
+                    else None
+                )
+                if isinstance(history, list):
+                    st.session_state.history_entries = history
+                    st.session_state.history_error = None
+                else:
+                    st.session_state.history_entries = None
+                    st.session_state.history_error = (
+                        "The metrics endpoint returned an invalid history response."
+                    )
             else:
-                st.error(metrics_result.get("error", "Could not load history."))
+                st.session_state.history_entries = None
+                st.session_state.history_error = metrics_result.get(
+                    "error", "Could not load history."
+                )
+            st.session_state.history_backend_url = backend_url
 
         history = st.session_state.history_entries
+        if st.session_state.history_error:
+            st.error(st.session_state.history_error)
         if history is None:
-            st.caption("History is available from the backend metrics endpoint.")
+            if not st.session_state.history_error:
+                st.caption("History is available from the backend metrics endpoint.")
         elif not history:
             st.caption("No inference calls recorded yet.")
         else:
@@ -792,6 +816,7 @@ if run_clicked:
             if isinstance(result, dict):
                 st.session_state.last_response = result
                 st.session_state.last_error = None
+                st.session_state.history_backend_url = None
                 st.toast("Inference completed.")
             else:
                 error_message = "The backend returned a non-object inference response."
