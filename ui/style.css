@@ -1,0 +1,291 @@
+/* ==========================================================================
+   Auroraa UI Stylesheet
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Workspace Typography & Main Container
+   -------------------------------------------------------------------------- */
+.stApp {
+    background-color: #f8fafc;
+}
+
+/* Ensure all headings in the main workspace are crisp and high-contrast */
+.main h1,
+.main h2,
+.main h3,
+.main h4,
+.main h5,
+.main h6,
+[data-testid="stHeadingWithActionElements"] h1,
+[data-testid="stHeadingWithActionElements"] h2,
+[data-testid="stHeadingWithActionElements"] h3 {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+.main p,
+.main span,
+.main li,
+.main [data-testid="stMarkdownContainer"] p {
+    color: #1e293b !important;
+    opacity: 1 !important;
+}
+
+.main label,
+.main [data-testid="stWidgetLabel"] p {
+    color: #334155 !important;
+    font-weight: 600 !important;
+}
+
+/* Text areas and inputs in main workspace */
+.main textarea,
+.main input {
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar Styling (Dark Navy Theme)
+   -------------------------------------------------------------------------- */
+section[data-testid="stSidebar"] {
+    background-color: #0b1329 !important;
+}
+
+/* Main sidebar title */
+section[data-testid="stSidebar"] h1 {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+/* Section headings: Sample cases, Backend */
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    color: #f8fafc !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+/* Descriptions and markdown text in sidebar */
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+}
+
+/* Captions and supporting descriptions */
+section[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+}
+
+/* Input labels */
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
+    color: #f1f5f9 !important;
+    opacity: 1 !important;
+}
+
+/* Status and informational text */
+section[data-testid="stSidebar"] .stMarkdown {
+    color: #cbd5e1 !important;
+}
+
+/* Sidebar standalone action buttons: Crisp, high-contrast dark text on clean light button */
+section[data-testid="stSidebar"] div.stButton > button,
+section[data-testid="stSidebar"] button[data-testid^="stBaseButton"] {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+section[data-testid="stSidebar"] div.stButton > button:hover,
+section[data-testid="stSidebar"] button[data-testid^="stBaseButton"]:hover {
+    background-color: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+}
+
+section[data-testid="stSidebar"] div.stButton > button *,
+section[data-testid="stSidebar"] button[data-testid^="stBaseButton"] *,
+section[data-testid="stSidebar"] div.stButton > button p,
+section[data-testid="stSidebar"] div.stButton > button span,
+section[data-testid="stSidebar"] div.stButton > button [data-testid="stMarkdownContainer"] p,
+section[data-testid="stSidebar"] div.stButton > button [data-testid="stIconMaterial"] {
+    color: #0f172a !important;
+    font-weight: 600 !important;
+}
+
+/* Sidebar Expander: Sleek dark container with high-contrast text and icons */
+section[data-testid="stSidebar"] [data-testid="stExpander"] {
+    background-color: #111c38 !important;
+    border: 1px solid #1e2e54 !important;
+    border-radius: 8px !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary {
+    background-color: #162447 !important;
+    border-radius: 8px !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
+    background-color: #1c2d58 !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary *,
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary p,
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary span,
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary [data-testid="stMarkdownContainer"] p {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stExpanderDetails"] {
+    background-color: #111c38 !important;
+    border-radius: 0 0 8px 8px !important;
+    padding-top: 8px !important;
+}
+
+/* Sidebar text / pre / code (Inference history logs and code elements) */
+section[data-testid="stSidebar"] [data-testid="stText"],
+section[data-testid="stSidebar"] [data-testid="stText"] *,
+section[data-testid="stSidebar"] [data-testid="stText"] pre,
+section[data-testid="stSidebar"] [data-testid="stText"] pre *,
+section[data-testid="stSidebar"] [data-testid="stText"] code,
+section[data-testid="stSidebar"] [data-testid="stText"] span,
+section[data-testid="stSidebar"] pre,
+section[data-testid="stSidebar"] pre *,
+section[data-testid="stSidebar"] code,
+section[data-testid="stSidebar"] code * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stText"] pre,
+section[data-testid="stSidebar"] pre {
+    background-color: #162447 !important;
+    border: 1px solid #253663 !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    font-size: 0.82rem !important;
+    line-height: 1.4 !important;
+}
+
+/* Sidebar inputs */
+section[data-testid="stSidebar"] input {
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar Selectbox & Downward Arrow
+   -------------------------------------------------------------------------- */
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] [role="combobox"],
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] > div,
+section[data-testid="stSidebar"] [data-baseweb="select"] > div {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+}
+
+/* Ensure the text input inside selectbox is clean and dark */
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] input {
+    background-color: transparent !important;
+    border: none !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+}
+
+/* Dropdown arrow button inside selectbox - completely transparent, no border */
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] button,
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] button[aria-label="Open"],
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] [role="button"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] button:hover,
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] button[aria-label="Open"]:hover {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+
+/* Downward arrow SVG in selectbox */
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] svg {
+    color: #0f172a !important;
+    fill: #0f172a !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] svg path {
+    fill: #0f172a !important;
+}
+
+/* Ensure the 24x24 transparent viewBox path is NEVER filled as a solid square */
+section[data-testid="stSidebar"] div[data-testid="stSelectbox"] svg path[fill="none"],
+section[data-testid="stSidebar"] svg path[fill="none"],
+section[data-testid="stSidebar"] svg path[d="M0 0h24v24H0V0z"],
+svg path[fill="none"],
+path[fill="none"] {
+    fill: none !important;
+}
+
+/* Selectbox dropdown popup list */
+div[data-testid="stSelectboxVirtualDropdown"],
+ul[role="listbox"] {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+}
+
+div[data-testid="stSelectboxVirtualDropdown"] li,
+ul[role="listbox"] li {
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+}
+
+div[data-testid="stSelectboxVirtualDropdown"] li:hover,
+div[data-testid="stSelectboxVirtualDropdown"] li[aria-selected="true"],
+ul[role="listbox"] li:hover,
+ul[role="listbox"] li[aria-selected="true"] {
+    background-color: #f1f5f9 !important;
+    color: #1e40af !important;
+}
+
+/* Sidebar divider */
+section[data-testid="stSidebar"] hr {
+    border-color: #1e293b !important;
+}
+
+/* --------------------------------------------------------------------------
+   Segmented Control
+   -------------------------------------------------------------------------- */
+div[data-testid="stSegmentedControl"] button p {
+    color: #334155 !important;
+    font-weight: 500 !important;
+}
+
+div[data-testid="stSegmentedControl"] button[aria-checked="true"] p {
+    color: #1e40af !important;
+    font-weight: 700 !important;
+}

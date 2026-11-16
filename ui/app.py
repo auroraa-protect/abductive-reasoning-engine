@@ -307,114 +307,11 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# High-contrast CSS to guarantee crisp typography and correct colors
-st.markdown(
-    """
-    <style>
-    /* Workspace typography */
-    .stApp {
-        background-color: #f8fafc;
-    }
-    
-    /* Ensure all headings in the main workspace are crisp and high-contrast */
-    .main h1, .main h2, .main h3, .main h4, .main h5, .main h6,
-    [data-testid="stHeadingWithActionElements"] h1,
-    [data-testid="stHeadingWithActionElements"] h2,
-    [data-testid="stHeadingWithActionElements"] h3 {
-        color: #0f172a !important;
-        font-weight: 700 !important;
-        opacity: 1 !important;
-    }
-    
-    .main p, .main span, .main li, .main [data-testid="stMarkdownContainer"] p {
-        color: #1e293b !important;
-        opacity: 1 !important;
-    }
-    
-    .main label, .main [data-testid="stWidgetLabel"] p {
-        color: #334155 !important;
-        font-weight: 600 !important;
-    }
-
-    /* Text areas and inputs */
-    .main textarea, .main input {
-        color: #0f172a !important;
-        background-color: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-    }
-
-    /* Dark Navy Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #0b1329 !important;
-    }
-
-    /* =================================
-   AURORAA SIDEBAR TEXT VISIBILITY
-================================= */
-
-/* Main sidebar title */
-section[data-testid="stSidebar"] h1 {
-    color: #ffffff !important;
-    font-weight: 700 !important;
-    opacity: 1 !important;
-}
-
-/* Section headings: Sample cases, Backend */
-section[data-testid="stSidebar"] h2,
-section[data-testid="stSidebar"] h3 {
-    color: #f8fafc !important;
-    font-weight: 700 !important;
-    opacity: 1 !important;
-}
-
-/* Descriptions and markdown text */
-section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
-section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span {
-    color: #cbd5e1 !important;
-    opacity: 1 !important;
-}
-
-/* Captions and supporting descriptions */
-section[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
-section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
-    color: #cbd5e1 !important;
-    opacity: 1 !important;
-}
-
-/* Input labels */
-section[data-testid="stSidebar"] label,
-section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
-    color: #f1f5f9 !important;
-    opacity: 1 !important;
-}
-
-/* Status and informational text */
-section[data-testid="stSidebar"] .stMarkdown {
-    color: #cbd5e1 !important;
-}
-
-/* Sidebar divider */
-section[data-testid="stSidebar"] hr {
-    border-color: #334155 !important;
-}
-
-    section[data-testid="stSidebar"] hr {
-        border-color: #1e293b !important;
-    }
-
-    /* Segmented Control */
-    div[data-testid="stSegmentedControl"] button p {
-        color: #334155 !important;
-        font-weight: 500 !important;
-    }
-    div[data-testid="stSegmentedControl"] button[aria-checked="true"] p {
-        color: #1e40af !important;
-        font-weight: 700 !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# Load external stylesheet
+_CSS_PATH = _UI_DIR / "style.css"
+if _CSS_PATH.exists():
+    with open(_CSS_PATH, "r", encoding="utf-8") as _css_file:
+        st.markdown(f"<style>\n{_css_file.read()}\n</style>", unsafe_allow_html=True)
 
 
 def _start_new_test() -> None:
@@ -574,9 +471,13 @@ with st.sidebar:
             st.caption("No inference calls recorded yet.")
         else:
             for entry in reversed(history[-5:]):
-                st.text(
-                    f"{entry.get('timestamp', '')} · "
-                    f"{entry.get('total_tokens', '—')} tokens"
+                st.markdown(
+                    f"<div style='background-color: #162447; border: 1px solid #253663; border-radius: 6px; padding: 6px 10px; margin-bottom: 6px;'>"
+                    f"<span style='color: #ffffff !important; font-size: 0.82rem; font-weight: 600; font-family: monospace;'>{entry.get('timestamp', '')}</span>"
+                    f"<span style='color: #cbd5e1 !important; margin: 0 6px;'>·</span>"
+                    f"<span style='color: #60a5fa !important; font-size: 0.82rem; font-weight: 600; font-family: monospace;'>{entry.get('total_tokens', '—')} tokens</span>"
+                    f"</div>",
+                    unsafe_allow_html=True,
                 )
 
 
