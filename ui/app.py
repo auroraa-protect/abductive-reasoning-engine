@@ -1009,43 +1009,50 @@ if st.session_state.last_response:
     st.header("Inference results")
     status_text = str(response.get("status", "completed")).replace("_", " ").title()
     overall = response.get("overall_assessment")
-
-    col_stat1, col_stat2 = st.columns([1, 1])
-    with col_stat1:
-        st.markdown(f"**Inference status:** `{status_text}`")
-    with col_stat2:
-        if overall:
-            badge_color = (
-                ":green[● MATCH]"
-                if overall == "MATCH"
-                else ":orange[● PARTIAL MATCH]"
-                if overall == "PARTIAL MATCH"
-                else ":red[● MISMATCH]"
-                if overall == "MISMATCH"
-                else ":blue[● INSUFFICIENT EVIDENCE]"
-            )
-            st.markdown(f"**Overall Assessment:** {badge_color}")
-
-    # Token Usage section
     usage = response.get("token_usage") or {}
+
+    badge_styles = {
+        "MATCH": ("#dcfce7", "#166534", "#86efac"),
+        "PARTIAL MATCH": ("#fef3c7", "#92400e", "#fcd34d"),
+        "MISMATCH": ("#fee2e2", "#991b1b", "#fca5a5"),
+        "INSUFFICIENT EVIDENCE": ("#f1f5f9", "#475569", "#cbd5e1"),
+    }
+    bg, fg, border = badge_styles.get(overall, ("#f1f5f9", "#475569", "#cbd5e1"))
+    verdict_badge = (
+        f"<span style='background-color: {bg}; color: {fg}; border: 1px solid {border}; "
+        f"padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 0.8rem;'>"
+        f"● {overall}</span>"
+        if overall
+        else ""
+    )
+
+    token_section = ""
     if usage and isinstance(usage, dict):
-        st.markdown("##### ⚡ Token Usage")
-        tok_col1, tok_col2, tok_col3, tok_col4 = st.columns(4)
-        with tok_col1:
-            st.metric("Total Tokens", f"{usage.get('total_tokens', 0):,}")
-        with tok_col2:
-            st.metric("Input Tokens", f"{usage.get('input_tokens', 0):,}")
-        with tok_col3:
-            st.metric("Output Tokens", f"{usage.get('output_tokens', 0):,}")
-        with tok_col4:
-            lat = usage.get("latency_ms", 0)
-            lat_str = f"{lat / 1000:.2f}s" if lat >= 1000 else f"{lat} ms"
-            st.metric("Latency", lat_str)
-        st.caption(
-            f"Provider / Model: `{usage.get('model', 'unknown')}` · "
-            f"Inference calls: {usage.get('inference_calls', 1)}"
+        lat = usage.get("latency_ms", 0)
+        lat_str = f"{lat / 1000:.2f}s" if lat >= 1000 else f"{lat}ms"
+        total_tok = f"{usage.get('total_tokens', 0):,}"
+        in_tok = f"{usage.get('input_tokens', 0):,}"
+        out_tok = f"{usage.get('output_tokens', 0):,}"
+        model_name = usage.get("model", "unknown")
+        token_section = (
+            f"<div style='display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 0.82rem; color: #475569;'>"
+            f"<span>⚡ <b>{total_tok}</b> tokens <span style='color: #64748b;'>({in_tok} in : {out_tok} out)</span></span>"
+            f"<span>⏱️ <b>{lat_str}</b></span>"
+            f"<span style='background-color: #e2e8f0; color: #334155; padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 0.76rem;'>{model_name}</span>"
+            f"</div>"
         )
-        st.divider()
+
+    st.markdown(
+        f"<div style='display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; "
+        f"background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 14px; margin: 4px 0 16px 0;'>"
+        f"<div style='display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #334155;'>"
+        f"<span>Status: <b>{status_text}</b></span>"
+        f"{verdict_badge}"
+        f"</div>"
+        f"{token_section}"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
 
     report = response.get("report", "")
     if not render_report_markdown(report):
