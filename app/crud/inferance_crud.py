@@ -15,8 +15,8 @@ from typing import Dict, Any, Tuple, Optional
 from fastapi import HTTPException
 
 from app.schemas.request_schemas import ExplainRequest
-from app.schemas.response_schemas import ExplainResponse, TokenMetrics
-from app.dependencies.grok_client import get_groq_completion, get_last_usage
+from app.schemas.response_schemas import ExplainResponse, ReportSections, TokenMetrics
+from app.dependencies.grok_client import get_groq_completion
 
 # ---------------------------------------------------------------------------
 # Global Token Tracker Log
@@ -242,93 +242,124 @@ def build_user_payload(req: ExplainRequest) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Section Parser Helper
+# Section Parser Helpers
 # ---------------------------------------------------------------------------
+REPORT_SECTION_HEADERS = (
+    "BUSINESS UNDERSTANDING",
+    "EVIDENCE MATCHING",
+    "POSSIBLE EXPLANATIONS",
+    "ADDITIONAL INFORMATION REQUIRED",
+    "OVERALL ASSESSMENT",
+)
+
+_SECTION_HEADER_RE = re.compile(
+    rf"^[ \t]*(?:#{{1,6}}[ \t]*)?(?:\*\*|__)?"
+    rf"(?:(?:SECTION[ \t]+\d+[ \t]*[:.)-]?[ \t]*)|(?:\d+[ \t]*[.)][ \t]*))?"
+    rf"(?P<header>{'|'.join(re.escape(header) for header in REPORT_SECTION_HEADERS)})"
+    rf"(?:\*\*|__)?[ \t]*:?[ \t]*$",
+    flags=re.IGNORECASE | re.MULTILINE,
+)
+
+_ASSESSMENT_STATUS_RE = re.compile(
+    r"\b(INSUFFICIENT EVIDENCE|PARTIAL MATCH|MISMATCH|MATCH)\b",
+    flags=re.IGNORECASE,
+)
+_ASSESSMENT_LABEL_RE = re.compile(
+    r"\b(?:final\s+)?(?:overall\s+)?"
+    r"(?:conclusion|assessment|verdict|decision)\b",
+    flags=re.IGNORECASE,
+)
+
+
+def _extract_overall_status(overall_text: str) -> Optional[str]:
+    for label in _ASSESSMENT_LABEL_RE.finditer(overall_text):
+        remainder = overall_text[label.end():]
+        first_line, separator, following_text = remainder.partition("\n")
+        candidate = first_line.strip(" \t:*_`-–—")
+        candidate = re.sub(r"^(?:is\b\s*)?(?:a\b\s*)?", "", candidate, flags=re.IGNORECASE)
+
+        direct_match = _ASSESSMENT_STATUS_RE.match(candidate)
+        if direct_match:
+            next_status = re.match(
+                r"\s*[/,]\s*(?:INSUFFICIENT EVIDENCE|PARTIAL MATCH|MISMATCH|MATCH)\b",
+                candidate[direct_match.end():],
+                flags=re.IGNORECASE,
+            )
+            if next_status:
+                return None
+            return direct_match.group(1).upper()
+
+        line_statuses = list(_ASSESSMENT_STATUS_RE.finditer(first_line))
+        unique_statuses = {match.group(1).upper() for match in line_statuses}
+        if len(unique_statuses) == 1:
+            return unique_statuses.pop()
+        if len(unique_statuses) > 1:
+            return None
+
+        if not candidate and separator:
+            next_line = following_text.splitlines()[0] if following_text else ""
+            next_line = next_line.strip(" \t:*_`-–—")
+            next_statuses = {
+                match.group(1).upper()
+                for match in _ASSESSMENT_STATUS_RE.finditer(next_line)
+            }
+            if len(next_statuses) == 1:
+                return next_statuses.pop()
+            if len(next_statuses) > 1:
+                return None
+
+    first_content_line = next(
+        (line.strip(" \t*`#") for line in overall_text.splitlines() if line.strip()),
+        "",
+    )
+    status_match = _ASSESSMENT_STATUS_RE.match(first_content_line)
+    return status_match.group(1).upper() if status_match else None
+
+
 def parse_report_sections(report_text: str) -> Tuple[Dict[str, str], Optional[str]]:
-    """Parse the 5 standardized report sections and overall assessment."""
-    headers = [
-        "BUSINESS UNDERSTANDING",
-        "EVIDENCE MATCHING",
-        "POSSIBLE EXPLANATIONS",
-        "ADDITIONAL INFORMATION REQUIRED",
-        "OVERALL ASSESSMENT",
-    ]
-    pattern = rf"(?:^|\n)\s*(?:[#*_\s-]*)\b({'|'.join(re.escape(h) for h in headers)})\b(?:[#*_\s-]*)(?:\n|$)"
-    splits = re.split(pattern, report_text, flags=re.IGNORECASE)
-
+    """Split a report using standalone section-heading lines."""
+    matches = list(_SECTION_HEADER_RE.finditer(report_text))
     sections: Dict[str, str] = {}
-    current_header = "INTRODUCTION"
-    for part in splits:
-        clean_part = part.strip()
-        matched = False
-        for h in headers:
-            if clean_part.upper() == h:
-                current_header = h
-                matched = True
-                break
-        if not matched and clean_part:
-            sections[current_header] = clean_part
+    for index, match in enumerate(matches):
+        header = match.group("header").upper()
+        if header in sections:
+            raise ValueError(f"Report contains a duplicate section: {header}.")
 
-    # Fallback if regex split didn't find multiple sections: simple string split
-    if len(sections) <= 1:
-        simple_pattern = rf"({'|'.join(re.escape(h) for h in headers)})"
-        splits = re.split(simple_pattern, report_text, flags=re.IGNORECASE)
-        current_header = "INTRODUCTION"
-        for part in splits:
-            clean_part = part.strip()
-            matched = False
-            for h in headers:
-                if clean_part.upper() == h:
-                    current_header = h
-                    matched = True
-                    break
-            if not matched and clean_part:
-                sections[current_header] = clean_part
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(report_text)
+        sections[header] = report_text[match.end():end].strip()
 
-    # Extract overall assessment status
-    overall_status = None
+    overall_status = _extract_overall_status(sections.get("OVERALL ASSESSMENT", ""))
+    return sections, overall_status
 
-    # 1. First look in OVERALL ASSESSMENT section if present
-    overall_text = sections.get("OVERALL ASSESSMENT", "")
-    if overall_text:
-        conclusion_match = re.search(r"Conclusion\s*[:\-]\s*([A-Za-z\s]+)", overall_text, flags=re.IGNORECASE)
-        if conclusion_match:
-            cand_text = conclusion_match.group(1).upper()
-            for cand in ["INSUFFICIENT EVIDENCE", "PARTIAL MATCH", "MISMATCH", "MATCH"]:
-                if cand in cand_text:
-                    overall_status = cand
-                    break
 
-        if not overall_status:
-            for cand in ["INSUFFICIENT EVIDENCE", "PARTIAL MATCH", "MISMATCH", "MATCH"]:
-                if cand in overall_text.upper():
-                    overall_status = cand
-                    break
-
-    # 2. Look anywhere in report_text for "Conclusion: <STATUS>" or "Overall Assessment: <STATUS>"
-    if not overall_status:
-        m = re.search(
-            r"(?:Conclusion|Overall Assessment)\s*[:\-]\s*(INSUFFICIENT EVIDENCE|PARTIAL MATCH|MISMATCH|MATCH)\b",
-            report_text,
-            flags=re.IGNORECASE,
+def validate_report_sections(
+    report_text: str,
+) -> Tuple[Dict[str, str], str]:
+    """Require all five non-empty sections and an explicit conclusion and summary."""
+    sections, overall_status = parse_report_sections(report_text)
+    missing = [
+        header for header in REPORT_SECTION_HEADERS if not sections.get(header, "").strip()
+    ]
+    if missing:
+        raise ValueError(
+            "LLM report is incomplete; missing or empty sections: "
+            + ", ".join(missing)
         )
-        if m:
-            overall_status = m.group(1).upper().strip()
 
-    # 3. Fallback: If report was truncated before section 5, infer from EVIDENCE MATCHING table
-    if not overall_status:
-        ev_text = sections.get("EVIDENCE MATCHING", report_text)
-        statuses = re.findall(r"\b(MISMATCH|PARTIAL MATCH|INSUFFICIENT EVIDENCE|MATCH)\b", ev_text, flags=re.IGNORECASE)
-        if statuses:
-            statuses_upper = [s.upper() for s in statuses]
-            if "MISMATCH" in statuses_upper:
-                overall_status = "MISMATCH"
-            elif "PARTIAL MATCH" in statuses_upper:
-                overall_status = "PARTIAL MATCH"
-            elif "INSUFFICIENT EVIDENCE" in statuses_upper:
-                overall_status = "INSUFFICIENT EVIDENCE"
-            elif "MATCH" in statuses_upper:
-                overall_status = "MATCH"
+    if overall_status is None:
+        raise ValueError(
+            "LLM report is incomplete; OVERALL ASSESSMENT must contain a valid Conclusion."
+        )
+
+    summary = re.search(
+        r"(?:\*\*)?Summary(?:\*\*)?\s*:\s*(?:\*\*)?(\S[\s\S]*)",
+        sections["OVERALL ASSESSMENT"],
+        flags=re.IGNORECASE,
+    )
+    if summary is None:
+        raise ValueError(
+            "LLM report is incomplete; OVERALL ASSESSMENT must contain a non-empty Summary."
+        )
 
     return sections, overall_status
 
@@ -351,7 +382,7 @@ async def generate(request: ExplainRequest) -> ExplainResponse:
     user_message = build_user_payload(request)
 
     t_start = time.perf_counter()
-    report = await get_groq_completion(
+    completion = await get_groq_completion(
         system_prompt=system_prompt,
         user_message=user_message,
         response_format="text",
@@ -361,9 +392,9 @@ async def generate(request: ExplainRequest) -> ExplainResponse:
     latency_ms = round((time.perf_counter() - t_start) * 1000)
 
     # Collect usage metrics
-    usage = get_last_usage()
+    usage = completion.usage
     token_metrics = TokenMetrics(
-        model=usage.get("model", os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")),
+        model=completion.model,
         input_tokens=usage.get("prompt_tokens", 0),
         output_tokens=usage.get("completion_tokens", 0),
         total_tokens=usage.get("total_tokens", 0),
@@ -377,13 +408,24 @@ async def generate(request: ExplainRequest) -> ExplainResponse:
         **token_metrics.model_dump(),
     })
 
-    # Parse sections
-    sections, overall_status = parse_report_sections(report)
+    if completion.finish_reason != "stop":
+        if completion.finish_reason == "length":
+            detail = "LLM response was truncated after reaching the completion token limit."
+        else:
+            reason = completion.finish_reason or "missing"
+            detail = f"LLM response ended unexpectedly (finish_reason={reason})."
+        raise HTTPException(status_code=502, detail=detail)
+
+    report = completion.content
+    try:
+        sections, overall_status = validate_report_sections(report)
+    except ValueError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
 
     return ExplainResponse(
         status="completed",
         overall_assessment=overall_status,
         report=report,
         token_usage=token_metrics,
-        sections=sections,
+        sections=ReportSections(**sections),
     )

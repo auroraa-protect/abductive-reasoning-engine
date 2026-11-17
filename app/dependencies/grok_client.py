@@ -1,9 +1,10 @@
+import asyncio
 import os
 import re
-import time
-import asyncio
-import httpx
+from dataclasses import dataclass
 from typing import Optional, Dict, Any
+
+import httpx
 from fastapi import HTTPException
 from dotenv import load_dotenv
 
@@ -12,12 +13,13 @@ load_dotenv()
 TIMEOUT = httpx.Timeout(60)
 MAX_RETRIES = 3
 
-_last_usage: Dict[str, Any] = {}
 
-
-def get_last_usage() -> Dict[str, Any]:
-    """Retrieve the token usage metrics from the most recent LLM completion call."""
-    return dict(_last_usage)
+@dataclass(frozen=True)
+class GroqCompletionResult:
+    content: str
+    finish_reason: Optional[str]
+    usage: Dict[str, Any]
+    model: str
 
 
 def _strip_markdown_fences(text: str) -> str:
@@ -34,7 +36,7 @@ async def get_groq_completion(
     response_format: Optional[str] = "text",
     max_tokens: int = 4000,
     temperature: float = 0.0,
-) -> str:
+) -> GroqCompletionResult:
     """
     Execute an inference call to Groq Cloud API with automated retry and usage tracking.
     """
@@ -65,7 +67,6 @@ async def get_groq_completion(
         "Content-Type": "application/json",
     }
 
-    start = time.perf_counter()
     last_error: Optional[Exception] = None
 
     for attempt in range(1, MAX_RETRIES + 1):
@@ -88,19 +89,47 @@ async def get_groq_completion(
 
             response.raise_for_status()
             data = response.json()
+            if not isinstance(data, dict):
+                raise HTTPException(
+                    status_code=502,
+                    detail="Groq API returned an invalid completion response.",
+                )
 
-            global _last_usage
-            usage = data.get("usage", {})
-            _last_usage = {
-                "prompt_tokens": usage.get("prompt_tokens", 0),
-                "completion_tokens": usage.get("completion_tokens", 0),
-                "total_tokens": usage.get("total_tokens", 0),
-                "latency_ms": round((time.perf_counter() - start) * 1000),
-                "model": model_name,
-            }
+            choices = data.get("choices")
+            if (
+                not isinstance(choices, list)
+                or not choices
+                or not isinstance(choices[0], dict)
+            ):
+                raise HTTPException(
+                    status_code=502,
+                    detail="Groq API returned no completion choice.",
+                )
 
-            raw = data["choices"][0]["message"]["content"]
-            return _strip_markdown_fences(raw)
+            choice = choices[0]
+            message = choice.get("message")
+            content = message.get("content") if isinstance(message, dict) else None
+            if not isinstance(content, str) or not content.strip():
+                raise HTTPException(
+                    status_code=502,
+                    detail="Groq API returned an empty or invalid completion.",
+                )
+
+            usage = data.get("usage")
+            if not isinstance(usage, dict):
+                usage = {}
+
+            finish_reason = choice.get("finish_reason")
+            return GroqCompletionResult(
+                content=_strip_markdown_fences(content),
+                finish_reason=finish_reason if isinstance(finish_reason, str) else None,
+                usage={
+                    "prompt_tokens": usage.get("prompt_tokens", 0),
+                    "completion_tokens": usage.get("completion_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0),
+                },
+                model=model_name,
+            )
 
         except httpx.HTTPStatusError as e:
             raise HTTPException(

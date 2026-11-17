@@ -4,9 +4,13 @@ Tests deterministic math calculations, payload synthesis, section parsing,
 and multi-industry case handling.
 """
 
-import os
+import asyncio
 import json
 import pytest
+import httpx
+from fastapi import HTTPException
+from unittest.mock import AsyncMock, patch
+from app.dependencies.grok_client import GroqCompletionResult, get_groq_completion
 from app.schemas.request_schemas import (
     ExplainRequest,
     BusinessProfile,
@@ -20,11 +24,13 @@ from app.schemas.request_schemas import (
     InventoryEvidence,
     InventoryItem,
 )
-from app.schemas.response_schemas import ExplainResponse, TokenMetrics
+from app.schemas.response_schemas import ExplainResponse, ReportSections
 from app.crud.inferance_crud import (
     compute_deterministic_reconciliations,
     build_user_payload,
     parse_report_sections,
+    generate,
+    REPORT_SECTION_HEADERS,
 )
 
 
@@ -187,3 +193,201 @@ def test_section_parsing():
     assert "ADDITIONAL INFORMATION REQUIRED" in sections
     assert "OVERALL ASSESSMENT" in sections
     assert status == "PARTIAL MATCH"
+
+
+def test_section_parser_handles_formatted_headings_without_splitting_body_text():
+    report = """
+    ## **BUSINESS UNDERSTANDING**
+    This company discusses the phrase OVERALL ASSESSMENT in its internal policy.
+
+    **EVIDENCE MATCHING**
+    Evidence aligns with the supplied claim.
+
+    3. POSSIBLE EXPLANATIONS
+    No material discrepancies were identified.
+
+    ### Section 4: ADDITIONAL INFORMATION REQUIRED
+    No additional records are needed.
+
+    ## Section 5: OVERALL ASSESSMENT
+    Conclusion: MATCH
+    Summary: The supplied claims are supported by the available evidence.
+    """
+
+    sections, status = parse_report_sections(report)
+
+    assert tuple(sections) == REPORT_SECTION_HEADERS
+    assert "OVERALL ASSESSMENT in its internal policy" in sections["BUSINESS UNDERSTANDING"]
+    assert status == "MATCH"
+
+
+_COMPLETE_REPORT = """BUSINESS UNDERSTANDING
+The business provides the declared products and services.
+
+EVIDENCE MATCHING
+Available records support the supplied claims.
+
+POSSIBLE EXPLANATIONS
+No material discrepancy requires an alternative explanation.
+
+ADDITIONAL INFORMATION REQUIRED
+No additional records are required for this assessment.
+
+OVERALL ASSESSMENT
+Conclusion: MATCH
+Summary: The supplied claims are supported by available evidence.
+"""
+
+
+def _completion_result(content, finish_reason="stop"):
+    return GroqCompletionResult(
+        content=content,
+        finish_reason=finish_reason,
+        usage={
+            "prompt_tokens": 20,
+            "completion_tokens": 30,
+            "total_tokens": 50,
+        },
+        model="test-model",
+    )
+
+
+@pytest.mark.parametrize(
+    ("conclusion", "expected_status"),
+    (
+        ("Final conclusion is **PARTIAL MATCH** based on available records.", "PARTIAL MATCH"),
+        ("Conclusion:\nINSUFFICIENT EVIDENCE", "INSUFFICIENT EVIDENCE"),
+        (
+            "Conclusion:\nThe available records indicate a PARTIAL MATCH.",
+            "PARTIAL MATCH",
+        ),
+        (
+            "Conclusion: MATCH / PARTIAL MATCH / MISMATCH / INSUFFICIENT EVIDENCE",
+            None,
+        ),
+    ),
+)
+def test_parser_extracts_explicit_conclusion_variants(conclusion, expected_status):
+    report = _COMPLETE_REPORT.replace("Conclusion: MATCH", conclusion)
+
+    _, status = parse_report_sections(report)
+
+    assert status == expected_status
+
+
+def test_generate_returns_valid_structured_response_with_all_sections():
+    with patch(
+        "app.crud.inferance_crud.get_groq_completion",
+        new=AsyncMock(return_value=_completion_result(_COMPLETE_REPORT)),
+    ):
+        response = asyncio.run(generate(ExplainRequest(text="Test case")))
+
+    assert isinstance(response.sections, ReportSections)
+    assert response.overall_assessment == "MATCH"
+    response_json = response.model_dump_json(by_alias=True)
+    parsed_json = json.loads(response_json)
+    assert set(parsed_json["sections"]) == set(REPORT_SECTION_HEADERS)
+    ExplainResponse.model_validate_json(response_json)
+
+
+def test_generate_rejects_token_limited_completion():
+    with patch(
+        "app.crud.inferance_crud.get_groq_completion",
+        new=AsyncMock(
+            return_value=_completion_result(_COMPLETE_REPORT, finish_reason="length")
+        ),
+    ):
+        with pytest.raises(HTTPException) as error:
+            asyncio.run(generate(ExplainRequest(text="Test case")))
+
+    assert error.value.status_code == 502
+    assert "truncated" in error.value.detail.lower()
+
+
+def test_generate_rejects_missing_report_sections():
+    incomplete_report = _COMPLETE_REPORT.replace(
+        "POSSIBLE EXPLANATIONS\nNo material discrepancy requires an alternative explanation.\n\n",
+        "",
+    )
+    with patch(
+        "app.crud.inferance_crud.get_groq_completion",
+        new=AsyncMock(return_value=_completion_result(incomplete_report)),
+    ):
+        with pytest.raises(HTTPException) as error:
+            asyncio.run(generate(ExplainRequest(text="Test case")))
+
+    assert error.value.status_code == 502
+    assert "POSSIBLE EXPLANATIONS" in error.value.detail
+
+
+def test_generate_rejects_missing_conclusion_or_summary():
+    incomplete_reports = (
+        (
+            _COMPLETE_REPORT.replace("Conclusion: MATCH", "Conclusion: UNKNOWN"),
+            "valid Conclusion",
+        ),
+        (
+            _COMPLETE_REPORT.replace(
+                "Summary: The supplied claims are supported by available evidence.",
+                "Summary:",
+            ),
+            "non-empty Summary",
+        ),
+    )
+
+    for report, expected_error in incomplete_reports:
+        with patch(
+            "app.crud.inferance_crud.get_groq_completion",
+            new=AsyncMock(return_value=_completion_result(report)),
+        ):
+            with pytest.raises(HTTPException) as error:
+                asyncio.run(generate(ExplainRequest(text="Test case")))
+
+        assert error.value.status_code == 502
+        assert expected_error in error.value.detail
+
+
+def test_groq_client_preserves_finish_reason_and_usage(monkeypatch):
+    class FakeAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_value, traceback):
+            return False
+
+        async def post(self, *args, **kwargs):
+            return httpx.Response(
+                200,
+                request=httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions"),
+                json={
+                    "choices": [
+                        {
+                            "message": {"content": "Partial report"},
+                            "finish_reason": "length",
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": 11,
+                        "completion_tokens": 22,
+                        "total_tokens": 33,
+                    },
+                },
+            )
+
+    monkeypatch.delenv("GROK_CLOUD_API", raising=False)
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    monkeypatch.setattr(
+        "app.dependencies.grok_client.httpx.AsyncClient",
+        FakeAsyncClient,
+    )
+
+    completion = asyncio.run(
+        get_groq_completion(system_prompt="system", user_message="request")
+    )
+
+    assert completion.finish_reason == "length"
+    assert completion.content == "Partial report"
+    assert completion.usage["total_tokens"] == 33

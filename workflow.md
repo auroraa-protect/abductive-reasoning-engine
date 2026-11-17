@@ -116,7 +116,7 @@ Provides a synthesized verdict:
 
 ---
 
-The backend returns the report, parsed sections, overall assessment when recognized, and token metrics in an `ExplainResponse`. Errors from the model provider are surfaced through the API rather than converted to a successful report.
+The backend returns the report, parsed sections, overall assessment, and token metrics in an `ExplainResponse`. The response schema requires all five non-empty sections. If the provider reports a token-limit finish reason, or the report is missing a required section, conclusion, or summary, the API returns a JSON error response instead of marking the output completed.
 
 ## 5. API Endpoints and Inference History
 
