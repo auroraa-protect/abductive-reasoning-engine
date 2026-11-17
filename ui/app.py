@@ -26,7 +26,12 @@ from ui.api_client import (
     run_inference,
 )
 from ui.components import extract_file_content, render_report_markdown
-from ui.sample_data import ABC_TEXTILE_JSON, SAMPLE_CASES
+from ui.sample_data import (
+    ABC_TEXTILE_DATA,
+    ABC_TEXTILE_JSON,
+    SAMPLE_CASES,
+    SAMPLE_TEXT_NARRATIVE,
+)
 from app.schemas.request_schemas import ExplainRequest as _ExplainRequest
 
 
@@ -63,10 +68,9 @@ def _remove_entry(section: str, idx: int) -> None:
 
 
 def _clear_section(section: str) -> None:
-    count = _get_count(section)
-    for i in range(count):
-        for field in _SECTION_FIELDS.get(section, []):
-            st.session_state.pop(_skey(section, i, field[0]), None)
+    prefix = f"sf__{section}__"
+    for k in [k for k in list(st.session_state.keys()) if k.startswith(prefix)]:
+        st.session_state.pop(k, None)
     st.session_state[f"sf_count__{section}"] = 1
 
 
@@ -306,41 +310,250 @@ if _CSS_PATH.exists():
         st.markdown(f"<style>\n{_css_file.read()}\n</style>", unsafe_allow_html=True)
 
 
+def _populate_text_fields_from_data(data: Dict[str, Any], narrative: str = "") -> None:
+    """Populate all structured text input fields from case evidence data."""
+    # 1. Clear existing section entries first
+    for section_key in _SECTION_FIELDS:
+        _clear_section(section_key)
+
+    # 2. Narrative context
+    st.session_state["text_business_context"] = narrative or ""
+    st.session_state["_text_business_context"] = narrative or ""
+
+    if not data or not isinstance(data, dict):
+        return
+
+    def _format_val(v: Any) -> str:
+        if v is None:
+            return ""
+        if isinstance(v, float) and v.is_integer():
+            return str(int(v))
+        return str(v)
+
+    def _set_val(sec: str, idx: int, field_name: str, val: Any) -> None:
+        if val is not None and val != "":
+            st.session_state[_skey(sec, idx, field_name)] = _format_val(val)
+
+    def _set_count(sec: str, count: int) -> None:
+        st.session_state[f"sf_count__{sec}"] = max(1, count)
+
+    # 1. Business Profile
+    bp = data.get("business_profile") or {}
+    if bp:
+        _set_val("business_details", 0, "Business name", bp.get("business_name"))
+        _set_val("business_details", 0, "Business type", bp.get("business_type"))
+        _set_val("business_details", 0, "Industry", bp.get("industry"))
+        _set_val("business_details", 0, "Business activity", bp.get("business_activity"))
+        _set_val("business_details", 0, "Business age (years)", bp.get("business_age_years"))
+        _set_val("business_details", 0, "Number of employees", bp.get("number_of_employees"))
+
+        _set_val("business_claims", 0, "Declared monthly turnover (₹)", bp.get("declared_monthly_turnover"))
+        _set_val("business_claims", 0, "Declared monthly production", bp.get("declared_monthly_production"))
+        _set_val("business_claims", 0, "Declared production capacity", bp.get("declared_production_capacity"))
+
+    # 2. Purchase Evidence
+    pe = data.get("purchase_evidence") or {}
+    bills = pe.get("bills") or []
+    if bills:
+        _set_count("purchase_bills", len(bills))
+        items_collected = []
+        for i, b in enumerate(bills):
+            _set_val("purchase_bills", i, "Supplier name", b.get("supplier_name"))
+            _set_val("purchase_bills", i, "Invoice date", b.get("invoice_date"))
+            _set_val("purchase_bills", i, "Total amount (₹)", b.get("total_amount"))
+            for it in b.get("items") or []:
+                items_collected.append(it)
+        if items_collected:
+            _set_count("purchase_items", len(items_collected))
+            for j, it in enumerate(items_collected):
+                _set_val("purchase_items", j, "Item name", it.get("item_name"))
+                _set_val("purchase_items", j, "Quantity", it.get("quantity"))
+                _set_val("purchase_items", j, "Unit", it.get("unit"))
+                _set_val("purchase_items", j, "Unit price (₹)", it.get("unit_price"))
+                _set_val("purchase_items", j, "Total amount (₹)", it.get("total_amount"))
+
+    # 3. Inventory Evidence
+    ie = data.get("inventory_evidence") or {}
+    dinv = ie.get("declared_inventory") or []
+    if dinv:
+        _set_count("inventory_declared", len(dinv))
+        for i, it in enumerate(dinv):
+            _set_val("inventory_declared", i, "Item name", it.get("item_name"))
+            _set_val("inventory_declared", i, "Quantity", it.get("quantity"))
+            _set_val("inventory_declared", i, "Unit", it.get("unit"))
+            _set_val("inventory_declared", i, "Estimated value (₹)", it.get("estimated_value"))
+
+    imgs = ie.get("image_analysis") or []
+    if imgs:
+        _set_count("inventory_images", len(imgs))
+        for i, img in enumerate(imgs):
+            objs = img.get("observed_objects") or []
+            objs_list = []
+            for o in objs:
+                cnt = o.get("estimated_count")
+                name = o.get("object", "")
+                objs_list.append(f"{name} × {cnt}" if cnt is not None else name)
+            _set_val("inventory_images", i, "Observed objects", ", ".join(objs_list))
+            obs = img.get("observations") or []
+            _set_val("inventory_images", i, "Observations", "; ".join(obs) if isinstance(obs, list) else str(obs))
+            _set_val("inventory_images", i, "Analysis confidence", img.get("analysis_confidence"))
+
+    # 4. Production Evidence
+    prod = data.get("production_evidence") or {}
+    precords = prod.get("production_records") or []
+    if precords:
+        _set_count("production_records", len(precords))
+        for i, r in enumerate(precords):
+            _set_val("production_records", i, "Date", r.get("date"))
+            _set_val("production_records", i, "Product", r.get("product"))
+            _set_val("production_records", i, "Quantity", r.get("quantity"))
+            _set_val("production_records", i, "Unit", r.get("unit"))
+
+    pcons = prod.get("raw_material_consumption") or []
+    if pcons:
+        _set_count("production_consumption", len(pcons))
+        for i, c in enumerate(pcons):
+            _set_val("production_consumption", i, "Material", c.get("material") or c.get("item_name"))
+            _set_val("production_consumption", i, "Quantity consumed", c.get("quantity"))
+            _set_val("production_consumption", i, "Unit", c.get("unit"))
+
+    pfg = prod.get("finished_goods") or []
+    if pfg:
+        _set_count("production_finished_goods", len(pfg))
+        for i, f in enumerate(pfg):
+            _set_val("production_finished_goods", i, "Product", f.get("product"))
+            _set_val("production_finished_goods", i, "Quantity", f.get("quantity"))
+            _set_val("production_finished_goods", i, "Unit", f.get("unit"))
+
+    # 5. Sales Evidence
+    se = data.get("sales_evidence") or {}
+    sbills = se.get("sales_bills") or []
+    if sbills:
+        _set_count("sales_bills", len(sbills))
+        for i, b in enumerate(sbills):
+            _set_val("sales_bills", i, "Customer name", b.get("customer_name"))
+            _set_val("sales_bills", i, "Invoice date", b.get("invoice_date"))
+            _set_val("sales_bills", i, "Total amount (₹)", b.get("total_amount"))
+
+    scust = se.get("customer_details") or []
+    if scust:
+        _set_count("sales_customers", len(scust))
+        for i, c in enumerate(scust):
+            _set_val("sales_customers", i, "Customer name", c.get("customer_name"))
+            _set_val("sales_customers", i, "Relationship", c.get("relationship"))
+
+    ssum = se.get("sales_summary") or {}
+    if ssum:
+        _set_val("sales_summary", 0, "Total sales value (₹)", ssum.get("total_sales_value"))
+        _set_val("sales_summary", 0, "Period", ssum.get("period"))
+
+    # 6. Physical Evidence
+    phy = data.get("physical_evidence") or {}
+    pvids = phy.get("video_analysis") or []
+    if pvids:
+        _set_count("physical_video", len(pvids))
+        for i, v in enumerate(pvids):
+            _set_val("physical_video", i, "Duration (seconds)", v.get("duration_seconds"))
+            acts = v.get("observed_activities") or []
+            _set_val("physical_video", i, "Observed activities", "; ".join(acts) if isinstance(acts, list) else str(acts))
+            mach = v.get("observed_machinery") or []
+            _set_val("physical_video", i, "Observed machinery", ", ".join(mach) if isinstance(mach, list) else str(mach))
+            _set_val("physical_video", i, "Analysis confidence", v.get("analysis_confidence"))
+
+    pmach = phy.get("machinery_analysis") or []
+    if pmach:
+        _set_count("physical_machinery", len(pmach))
+        for i, m in enumerate(pmach):
+            _set_val("physical_machinery", i, "Machine name", m.get("machine_name"))
+            _set_val("physical_machinery", i, "Observed count", m.get("observed_count"))
+            _set_val("physical_machinery", i, "Condition", m.get("condition"))
+
+    prem = phy.get("premises_analysis") or []
+    if prem:
+        _set_count("physical_premises", len(prem))
+        for i, p in enumerate(prem):
+            _set_val("physical_premises", i, "Area", p.get("area"))
+            obs_text = p.get("observation") or p.get("observations") or ""
+            if isinstance(obs_text, list):
+                obs_text = "; ".join(obs_text)
+            _set_val("physical_premises", i, "Observations", obs_text)
+
+    # 7. Financial Evidence
+    fe = data.get("financial_evidence") or {}
+    btx = fe.get("bank_transactions") or []
+    if btx:
+        _set_count("financial_bank", len(btx))
+        for i, t in enumerate(btx):
+            _set_val("financial_bank", i, "Transaction date", t.get("transaction_date"))
+            _set_val("financial_bank", i, "Type", t.get("transaction_type"))
+            _set_val("financial_bank", i, "Amount (₹)", t.get("amount"))
+            _set_val("financial_bank", i, "Description", t.get("description"))
+
+    elec = fe.get("electricity_bills") or []
+    if elec:
+        _set_count("financial_electricity", len(elec))
+        for i, e in enumerate(elec):
+            _set_val("financial_electricity", i, "Billing month", e.get("billing_month"))
+            _set_val("financial_electricity", i, "Units consumed", e.get("units_consumed"))
+            _set_val("financial_electricity", i, "Bill amount (₹)", e.get("bill_amount"))
+
+    gst = fe.get("gst_records") or []
+    if gst:
+        _set_count("financial_gst", len(gst))
+        for i, g in enumerate(gst):
+            _set_val("financial_gst", i, "Period", g.get("period"))
+            _set_val("financial_gst", i, "Declared turnover (₹)", g.get("declared_turnover"))
+
+    # 8. Additional Evidence
+    ae = data.get("additional_evidence") or {}
+    docs = ae.get("documents") or []
+    if docs:
+        _set_count("additional_documents", len(docs))
+        for i, d in enumerate(docs):
+            if isinstance(d, dict):
+                _set_val("additional_documents", i, "Document name / type", d.get("name") or d.get("type") or "")
+                _set_val("additional_documents", i, "Description", d.get("description") or "")
+            else:
+                _set_val("additional_documents", i, "Document name / type", str(d))
+
+    aobs = ae.get("observations") or []
+    if aobs:
+        _set_count("additional_observations", len(aobs))
+        for i, o in enumerate(aobs):
+            _set_val("additional_observations", i, "Observation", str(o))
+
+
 def _start_new_test() -> None:
     st.session_state.last_response = None
     st.session_state.last_error = None
     st.session_state.json_input = ""
-    st.session_state.input_mode = "JSON input"
-    for key in TEXT_INPUT_DEFAULTS:
-        st.session_state[key] = ""
-        st.session_state[f"_{key}"] = ""
-    # Clear all structured evidence fields
-    for section_key in _SECTION_FIELDS:
-        _clear_section(section_key)
+    # Clear all structured evidence and context fields
+    _clear_text_input()
     st.session_state.file_notes = ""
     st.session_state.upload_generation += 1
 
 
 def _load_sample_case(sample: Dict[str, Any]) -> None:
-    st.session_state.input_mode = "JSON input"
     st.session_state.json_input = sample["json_str"]
+    _populate_text_fields_from_data(sample.get("data", {}), sample.get("text_narrative", ""))
     st.session_state.last_error = None
-    for key, default_value in TEXT_INPUT_DEFAULTS.items():
-        st.session_state[key] = default_value
-        st.session_state[f"_{key}"] = default_value
+    st.session_state.last_response = None
+    current_mode = st.session_state.get("input_mode")
+    if current_mode not in ("Text input", "JSON input", "File upload"):
+        st.session_state.input_mode = "JSON input"
 
 
 def _load_abc_textile() -> None:
-    st.session_state.input_mode = "JSON input"
     st.session_state.json_input = ABC_TEXTILE_JSON
+    _populate_text_fields_from_data(ABC_TEXTILE_DATA, SAMPLE_TEXT_NARRATIVE)
+    st.session_state.last_error = None
+    st.session_state.last_response = None
 
 
 def _clear_text_input() -> None:
     for key in TEXT_INPUT_DEFAULTS:
         st.session_state[key] = ""
         st.session_state[f"_{key}"] = ""
-    for section_key in ("business_details", "business_claims"):
-        _clear_section(section_key)
     for section_key in _SECTION_FIELDS:
         _clear_section(section_key)
 
@@ -366,6 +579,9 @@ st.session_state.setdefault("last_error", None)
 for key, default_value in TEXT_INPUT_DEFAULTS.items():
     st.session_state.setdefault(f"_{key}", default_value)
     st.session_state.setdefault(key, st.session_state[f"_{key}"])
+if not st.session_state.get("_text_initialized"):
+    _populate_text_fields_from_data(ABC_TEXTILE_DATA, SAMPLE_TEXT_NARRATIVE)
+    st.session_state["_text_initialized"] = True
 st.session_state.setdefault("file_notes", "")
 st.session_state.setdefault("upload_generation", 0)
 st.session_state.setdefault("history_entries", None)
@@ -573,6 +789,32 @@ if input_mode == "JSON input":
 
 
 elif input_mode == "Text input":
+    action_columns = st.columns(3)
+    with action_columns[0]:
+        selected_case_name = st.session_state.get("sample_selection", list(SAMPLE_CASES.keys())[0])
+        st.button(
+            "Load selected sample",
+            icon=":material/folder_open:",
+            on_click=_load_sample_case,
+            args=(SAMPLE_CASES.get(selected_case_name, SAMPLE_CASES[list(SAMPLE_CASES.keys())[0]]),),
+            key="load_selected_sample_text",
+            help=f"Load '{selected_case_name}' into these text fields.",
+        )
+    with action_columns[1]:
+        st.button(
+            "Load ABC Textile sample",
+            icon=":material/description:",
+            on_click=_load_abc_textile,
+            key="load_abc_textile_text",
+        )
+    with action_columns[2]:
+        st.button(
+            "Clear text",
+            icon=":material/delete:",
+            on_click=_clear_text_input,
+            key="clear_text",
+        )
+
     st.caption(
         "Fill in each field separately. Use **+ Add another** to add multiple entries. Leave unknown fields blank."
     )
@@ -604,7 +846,7 @@ elif input_mode == "Text input":
         "Clear text",
         icon=":material/delete:",
         on_click=_clear_text_input,
-        key="clear_text",
+        key="clear_text_bottom",
     )
 
 else:
