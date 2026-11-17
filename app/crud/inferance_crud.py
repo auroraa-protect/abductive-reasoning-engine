@@ -237,6 +237,13 @@ def build_user_payload(req: ExplainRequest) -> str:
             "\n=== DETERMINISTIC FACT CHECK (Python-Verified Math) ===\n"
             + "\n".join(f"{i+1}. {fact}" for i, fact in enumerate(facts))
         )
+        parts.append(
+            "\n=== ABDUCTIVE HYPOTHESIS DIRECTIVE ===\n"
+            "- Focus on the primary 2 to 3 material discrepancies; formulate 2 to 3 competing, plausible commercial/operational explanations for each.\n"
+            "- Keep table cells strictly concise (1-2 sentences, under 35 words per cell) so all 5 sections finish cleanly without truncation.\n"
+            "- Actively consider real-world MSME conditions: opening inventory, informal trade credit (30-90 days), walk-in cash transactions, batching, and reporting cutoffs.\n"
+            "- Never speculate on fraud, tax evasion, shell operations, or bad faith without explicit forensic proof."
+        )
 
     return "\n".join(parts)
 
@@ -386,7 +393,7 @@ async def generate(request: ExplainRequest) -> ExplainResponse:
         system_prompt=system_prompt,
         user_message=user_message,
         response_format="text",
-        max_tokens=4000,
+        max_tokens=6000,
         temperature=0.0,
     )
     latency_ms = round((time.perf_counter() - t_start) * 1000)
@@ -408,19 +415,19 @@ async def generate(request: ExplainRequest) -> ExplainResponse:
         **token_metrics.model_dump(),
     })
 
-    if completion.finish_reason != "stop":
-        if completion.finish_reason == "length":
-            detail = "LLM response was truncated after reaching the completion token limit."
-        else:
-            reason = completion.finish_reason or "missing"
-            detail = f"LLM response ended unexpectedly (finish_reason={reason})."
-        raise HTTPException(status_code=502, detail=detail)
-
     report = completion.content
     try:
         sections, overall_status = validate_report_sections(report)
     except ValueError as error:
-        raise HTTPException(status_code=502, detail=str(error)) from error
+        if completion.finish_reason == "length":
+            detail = (
+                "LLM response was truncated after reaching the completion token limit. "
+                "The report could not be fully generated."
+            )
+        else:
+            reason = completion.finish_reason or "missing"
+            detail = f"LLM report validation failed: {str(error)} (finish_reason={reason})."
+        raise HTTPException(status_code=502, detail=detail) from error
 
     return ExplainResponse(
         status="completed",

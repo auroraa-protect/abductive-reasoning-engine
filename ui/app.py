@@ -1008,7 +1008,44 @@ if st.session_state.last_response:
     response = st.session_state.last_response
     st.header("Inference results")
     status_text = str(response.get("status", "completed")).replace("_", " ").title()
-    st.caption(f"Inference status: {status_text}")
+    overall = response.get("overall_assessment")
+
+    col_stat1, col_stat2 = st.columns([1, 1])
+    with col_stat1:
+        st.markdown(f"**Inference status:** `{status_text}`")
+    with col_stat2:
+        if overall:
+            badge_color = (
+                ":green[● MATCH]"
+                if overall == "MATCH"
+                else ":orange[● PARTIAL MATCH]"
+                if overall == "PARTIAL MATCH"
+                else ":red[● MISMATCH]"
+                if overall == "MISMATCH"
+                else ":blue[● INSUFFICIENT EVIDENCE]"
+            )
+            st.markdown(f"**Overall Assessment:** {badge_color}")
+
+    # Token Usage section
+    usage = response.get("token_usage") or {}
+    if usage and isinstance(usage, dict):
+        st.markdown("##### ⚡ Token Usage")
+        tok_col1, tok_col2, tok_col3, tok_col4 = st.columns(4)
+        with tok_col1:
+            st.metric("Total Tokens", f"{usage.get('total_tokens', 0):,}")
+        with tok_col2:
+            st.metric("Input Tokens", f"{usage.get('input_tokens', 0):,}")
+        with tok_col3:
+            st.metric("Output Tokens", f"{usage.get('output_tokens', 0):,}")
+        with tok_col4:
+            lat = usage.get("latency_ms", 0)
+            lat_str = f"{lat / 1000:.2f}s" if lat >= 1000 else f"{lat} ms"
+            st.metric("Latency", lat_str)
+        st.caption(
+            f"Provider / Model: `{usage.get('model', 'unknown')}` · "
+            f"Inference calls: {usage.get('inference_calls', 1)}"
+        )
+        st.divider()
 
     report = response.get("report", "")
     if not render_report_markdown(report):
