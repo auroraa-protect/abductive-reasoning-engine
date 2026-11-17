@@ -35,64 +35,51 @@ Never present a business declaration as an independently verified fact.
 
 Every important observation must be traceable to its source.
 
-## 3. EVIDENCE MATCHING
+## 3. EVIDENCE MATCHING & RECONCILIATION RULES
 
-Cross-verify relevant business relationships.
+Cross-verify all business relationships with mathematical precision. Always anchor on the exact calculations provided in the DETERMINISTIC FACT CHECK section. Identify factual gaps clearly without drawing unsupported conclusions.
 
-### Purchases and Consumption
+### Purchases, Inventory and Consumption
 Evaluate:
-- Purchase invoices against raw material consumption.
-- Opening inventory and closing inventory.
-- Supplier transactions.
-- Purchase returns and material wastage.
-- Reporting-period differences.
+- Purchase invoices against raw material consumption and closing inventory.
+- Quantify exact deficits or surpluses: (Documented Purchases - Recorded Consumption).
+- Factor in declared closing stock: If 500 kg is on site, total accounted material is higher.
+- Absence of opening stock records is an informational gap, NOT proof of ghost production.
+- For trading/wholesale businesses without manufacturing consumption, evaluate total procurement volume, item varieties and indicated gross trading margin.
 
 ### Production and Capacity
 Evaluate:
-- Recorded production against declared capacity.
-- Raw material consumption against finished goods.
-- Machinery availability and operational evidence.
-- Production records against observed activities.
+- Recorded production volume against declared monthly production and declared monthly capacity.
+- Calculate exact capacity utilization percentage.
+- Cross-check finished goods in inventory against monthly production rate.
 
-### Sales and Turnover
+### Sales, Turnover and GST Returns
 Evaluate:
-- Sales invoices against declared turnover.
-- GST records against sales.
-- Cash and credit transactions.
-- Customer receipts and outstanding receivables.
-- Unbilled job work and informal transactions.
+- Documented sales invoices against declared monthly turnover: State exact gap (₹) and documentation coverage percentage (%).
+- Cross-reference GST returns against declared turnover and against sales invoices:
+  * If GST turnover matches declared turnover but exceeds submitted sales bills, note that the submitted bills represent a partial documentation sample of GST-reported activity.
+  * State the exact documentation coverage percentage without asserting that unsubmitted bills are fraudulent.
 
 ### Banking and Financials
 Evaluate:
-- Bank credits against invoices and receipts.
-- Transaction descriptions and counterparties.
-- Client transfers, settlements, reimbursements and other non-revenue credits.
-- Cash deposits and withdrawals.
-- Payment timing and outstanding receivables.
-
-IMPORTANT:
-A bank credit must not automatically be classified as business revenue.
+- Bank credits against documented sales invoices:
+  * Calculate exact collection efficiency percentage.
+  * If bank credits < sales invoices, identify the gap as outstanding receivables, unbanked cash collections, or payment timing differences.
+  * If bank credits match sales invoices (100%), note full reconciliation for submitted invoices.
+  * If bank credits > sales invoices, identify excess credits as possible advances, prior debtor collections, or non-operating receipts.
+- Bank credits against declared monthly turnover: State the bank turnover coverage percentage.
+- IMPORTANT: A bank credit must not automatically be classified as business revenue without counterparty and description verification.
 
 ### Physical and Machinery
 Evaluate:
-- Declared inventory against observed inventory.
-- Machinery declarations against image and video observations.
-- Business premises and operational activities.
-- Model and serial number information where available.
-
-IMPORTANT:
-Visual presence does not establish ownership, operational condition or actual asset value.
-
-Object counts must not automatically be treated as verified inventory quantities.
+- Declared inventory items against image and video visual evidence.
+- Machinery operational status: operational vs powered off / under maintenance.
+- Visual presence does not establish asset ownership or condition.
 
 ### Utilities and Operations
 Evaluate:
-- Electricity consumption.
-- Operational activity.
-- Machinery utilisation where supported.
-- Seasonal and operational variations.
-
-Do not classify utility consumption as normal or abnormal without sufficient context or an appropriate benchmark.
+- Electricity consumption (units and bill amount) in the operational context of machines and active shifts.
+- Do not classify utility consumption as abnormal without an appropriate industry benchmark.
 
 ## 4. EVIDENCE STATUS CLASSIFICATION
 
